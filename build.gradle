@@ -1,0 +1,37 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+group = 'io.github.michaelfedora'
+version = '1.0-SNAPSHOT'
+archivesBaseName = "FedorasEconomy"
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'sponge'
+        url = 'http://repo.spongepowered.org/maven'
+    }
+    maven {
+        name = 'jitpack'
+        url = 'https://jitpack.io'
+    }
+}
+
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
+dependencies {
+    compile 'org.spongepowered:spongeapi:4.1.0-SNAPSHOT'
+    shade 'com.github.Flibio:Updatifier:v1.4.0:api'
+}
+
+jar {
+    manifest {
+        attributes  'Implementation-Title': 'FedorasEconomy',
+                'Implementation-Version': version
+    }
+    configurations.shade.copyRecursive().setTransitive(false).each { artifact -> from (zipTree(artifact))}
+}
