@@ -1,8 +1,6 @@
 package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
 
-import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -12,9 +10,10 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.economy.Currency;
-import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextStyles;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -59,7 +58,7 @@ public class BalanceExecutor extends FeExecutorBase {
 
         int count = 0;
 
-        Text.Builder tb = Text.builder("Balances: ");
+        Text.Builder tb = Text.builder().append(Text.of(TextColors.GOLD, TextStyles.BOLD, "Balances: "));
         for(Map.Entry<Currency, BigDecimal> entry : balances.entrySet()) {
             tb.append(entry.getKey().format(entry.getValue()));
             if(++count < balances.size())

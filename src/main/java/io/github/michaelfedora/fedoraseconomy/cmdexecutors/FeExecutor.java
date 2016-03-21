@@ -35,9 +35,9 @@ public class FeExecutor extends FeExecutorBase {
     public static CommandSpec create(Map<List<String>, ? extends CommandCallable> children) {
         return CommandSpec.builder()
                 .description(Text.of("Lists version information"))
-                .permission(PluginInfo.DATA_ROOT)
+                .permission(PluginInfo.DATA_ROOT + ".use")
                 .children(children)
-                .executor(new BalanceExecutor())
+                .executor(new FeExecutor())
                 .build();
     }
 

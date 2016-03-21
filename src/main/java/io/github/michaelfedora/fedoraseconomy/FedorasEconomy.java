@@ -20,7 +20,6 @@ import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
-import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.economy.Currency;
@@ -28,7 +27,6 @@ import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.format.TextFormat;
 import org.spongepowered.api.text.format.TextStyles;
 
 import java.nio.file.Path;
@@ -119,7 +117,7 @@ public class FedorasEconomy {
         subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
         subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
         subCommands.put(FeSetExecutor.ALIASES, FeSetExecutor.create());
-        subCommands.put(FeAdjustExecutor.ALIASES, FeAdjustExecutor.create());
+        subCommands.put(FeAddExecutor.ALIASES, FeAddExecutor.create());
 
         commandManager.register(this, FeExecutor.create(subCommands), FeExecutor.ALIASES);
     }

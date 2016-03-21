@@ -14,53 +14,66 @@ import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.transaction.ResultType;
-import org.spongepowered.api.service.economy.transaction.TransferResult;
+import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Michael on 3/19/2016.
  */
-public class PayExecutor extends FeExecutorBase {
+public class FeAddExecutor extends FeExecutorBase {
 
-    public static final List<String> ALIASES = Collections.singletonList("pay");
+    public static final List<String> ALIASES = Collections.singletonList("add");
 
     public static final String NAME = ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Pay another user"))
+                .description(Text.of("Add to yours or another's account"))
                 .permission(PluginInfo.DATA_ROOT + '.' + NAME)
-                .arguments(GenericArguments.user(Text.of("user")),
-                        GenericArguments.doubleNum(Text.of("amount")),
-                        GenericArguments.catalogedElement(Text.of("currency"), Currency.class))
-                .executor(new PayExecutor())
+                .arguments(GenericArguments.doubleNum(Text.of("amount")),
+                        GenericArguments.catalogedElement(Text.of("currency"), Currency.class),
+                        GenericArguments.optional(GenericArguments.user(Text.of("user"))))
+                .executor(new FeAddExecutor())
                 .build();
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        if(!(src instanceof Player))
-            throw new CommandException(Text.of("Your not a player! You can't pay anyone!"));
+        User user;
 
-        User user = args.<User>getOne("user").orElseThrow(() -> new CommandException(Text.of("Bad param [user]!")));
+        Optional<User> opt_user = args.getOne("user");
+        if(!opt_user.isPresent())
+            if(src instanceof Player)
+                user = (User) src;
+            else
+                throw new CommandException(Text.of("Bad param [user]!"));
+        else
+            user = opt_user.get();
+
+
+
+        Account account = tryGetAccount(user);
 
         BigDecimal amount = BigDecimal.valueOf(args.<Double>getOne("amount").orElseThrow(() -> new CommandException(Text.of("Bad param [amount]!"))));
 
         Currency currency = args.<Currency>getOne("currency").orElseThrow(() -> new CommandException(Text.of("Bad param [currency]!")));
 
-        Account myAccount = tryGetAccount((User) src);
-        Account theirAccount = tryGetAccount(user);
-
-        TransferResult result = myAccount.transfer(theirAccount, currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
+        TransactionResult result;
+        if(amount.compareTo(BigDecimal.ZERO) < 0)
+            result = account.withdraw(currency, amount.abs(), Cause.of(NamedCause.of(src.getName(), src)));
+        else
+            result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if(result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not pay ", user.getName(), " ", currency.format(amount), ": ", result.getResult()));
+            src.sendMessage(Text.of("Added ", currency.format(amount), " to ", user.getName(), "'s account: ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Payed ", user.getName(), " ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Added ", currency.format(amount), " to ", user.getName(), "'s account!"));
         }
 
         return CommandResult.success();
