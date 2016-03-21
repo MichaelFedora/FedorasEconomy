@@ -1,14 +1,50 @@
 package io.github.michaelfedora.fedoraseconomy.economy;
 
+import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
+import org.spongepowered.api.CatalogType;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.service.economy.Currency;
+import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColor;
+import org.spongepowered.api.text.format.TextFormat;
+import org.spongepowered.api.text.format.TextStyle;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Created by Michael on 3/18/2016.
  */
 public class FeCurrency implements Currency {
+
+    private String identifier;
+
+    private Text displayName;
+    private Text pluralDisplayName;
+
+    private Text symbol;
+    private boolean rightSideSymbol; // default left
+
+    private int valueScale;
+    private TextColor valueColor;
+    private TextStyle valueStyle;
+
+    public FeCurrency(String identifier, Text displayName, Text pluralDisplayName, Text symbol, boolean rightSideSymbol, int valueScale, TextColor valueColor, TextStyle valueStyle) {
+
+        this.identifier = identifier;
+
+        this.displayName = displayName;
+        this.pluralDisplayName = pluralDisplayName;
+
+        this.symbol = symbol;
+        this.rightSideSymbol = rightSideSymbol;
+
+        this.valueScale = valueScale;
+        this.valueColor = valueColor;
+        this.valueStyle = valueStyle;
+    }
+
     /**
      * The currency's display name, in singular form. Ex: Dollar.
      * <p>
@@ -19,7 +55,7 @@ public class FeCurrency implements Currency {
      */
     @Override
     public Text getDisplayName() {
-        return null;
+        return this.displayName;
     }
 
     /**
@@ -32,7 +68,7 @@ public class FeCurrency implements Currency {
      */
     @Override
     public Text getPluralDisplayName() {
-        return null;
+        return this.pluralDisplayName;
     }
 
     /**
@@ -42,7 +78,7 @@ public class FeCurrency implements Currency {
      */
     @Override
     public Text getSymbol() {
-        return null;
+        return this.symbol;
     }
 
     /**
@@ -55,7 +91,33 @@ public class FeCurrency implements Currency {
      */
     @Override
     public Text format(BigDecimal amount) {
-        return null;
+
+        Text.Builder formatted = Text.builder();
+
+        amount = amount.setScale(this.valueScale, RoundingMode.FLOOR);
+
+        Text formattedAmount = Text.of(this.valueColor, this.valueStyle, amount);
+
+        if(this.symbol.compareTo(Text.EMPTY) > 0) {
+
+            if(!this.rightSideSymbol) {
+
+                formatted.append(this.symbol);
+                formatted.append(formattedAmount);
+
+            } else {
+
+                formatted.append(formattedAmount);
+                formatted.append(this.symbol);
+            }
+
+        } else {
+
+            formatted.append(formattedAmount, Text.of(" "));
+            formatted.append( ((amount.abs().compareTo(BigDecimal.ONE) == 0) ? this.displayName : this.pluralDisplayName) );
+        }
+
+        return formatted.build();
     }
 
     /**
@@ -64,12 +126,38 @@ public class FeCurrency implements Currency {
      * <p>Should include the symbol if it is present</p>
      *
      * @param amount            The amount to format
-     * @param numFractionDigits The numer of fractional digits to use
+     * @param numFractionDigits The number of fractional digits to use
      * @return String formatted amount.
      */
     @Override
     public Text format(BigDecimal amount, int numFractionDigits) {
-        return null;
+
+        Text.Builder formatted = Text.builder();
+
+        amount = amount.setScale(numFractionDigits, RoundingMode.FLOOR);
+
+        Text formattedAmount = Text.of(this.valueColor, amount);
+
+        if(this.symbol.compareTo(Text.EMPTY) > 0) {
+
+            if(!this.rightSideSymbol) {
+
+                formatted.append(this.symbol);
+                formatted.append(formattedAmount);
+
+            } else {
+
+                formatted.append(formattedAmount);
+                formatted.append(this.symbol);
+            }
+
+        } else {
+
+            formatted.append(formattedAmount, Text.of(" "));
+            formatted.append( ((amount.abs().compareTo(BigDecimal.ONE) == 0) ? this.displayName : this.pluralDisplayName) );
+        }
+
+        return formatted.build();
     }
 
     /**
@@ -80,7 +168,7 @@ public class FeCurrency implements Currency {
      */
     @Override
     public int getDefaultFractionDigits() {
-        return 0;
+        return this.valueScale;
     }
 
     /**
@@ -91,7 +179,19 @@ public class FeCurrency implements Currency {
      */
     @Override
     public boolean isDefault() {
-        return false;
+
+        Currency defaultCurrency;
+        try {
+
+            defaultCurrency = Sponge.getServiceManager().provide(EconomyService.class).orElseThrow(Exception::new).getDefaultCurrency();
+
+        } catch(Exception e) {
+
+            FedorasEconomy.getLogger().error("Could not get EconomyService!", e);
+            return false;
+        }
+
+        return this.equals(defaultCurrency);
     }
 
     /**
@@ -109,7 +209,7 @@ public class FeCurrency implements Currency {
      */
     @Override
     public String getId() {
-        return null;
+        return this.identifier;
     }
 
     /**
@@ -121,6 +221,15 @@ public class FeCurrency implements Currency {
      */
     @Override
     public String getName() {
-        return null;
+        return this.displayName.toPlain();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if(!(obj instanceof Currency))
+            return false;
+
+        return this.getId().equals( ((Currency) obj).getId() );
     }
 }

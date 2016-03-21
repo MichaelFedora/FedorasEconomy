@@ -1,12 +1,22 @@
 package io.github.michaelfedora.fedoraseconomy.economy;
 
+import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeVirtualAccount;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.context.ContextCalculator;
+import org.spongepowered.api.service.context.Contextual;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.account.VirtualAccount;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -16,6 +26,18 @@ import java.util.UUID;
  */
 public class FeEconomyService implements EconomyService {
 
+    private Currency defaultCurrency;
+
+    public FeEconomyService(Currency defaultCurrency) {
+        this.setDefaultCurrency(defaultCurrency);
+    }
+
+    public void setDefaultCurrency(Currency defaultCurrency) {
+        this.defaultCurrency = defaultCurrency;
+
+        if(!this.getCurrencies().contains(defaultCurrency))
+            Sponge.getRegistry().register(Currency.class, defaultCurrency);
+    }
 
     /**
      * Retrieves the default {@link Currency} used by the {@link EconomyService}.
@@ -25,7 +47,7 @@ public class FeEconomyService implements EconomyService {
      */
     @Override
     public Currency getDefaultCurrency() {
-        return null;
+        return this.defaultCurrency;
     }
 
     /**
@@ -42,7 +64,7 @@ public class FeEconomyService implements EconomyService {
      */
     @Override
     public Set<Currency> getCurrencies() {
-        return null;
+        return new HashSet<>(Sponge.getRegistry().getAllOf(Currency.class));
     }
 
     /**
@@ -53,7 +75,7 @@ public class FeEconomyService implements EconomyService {
      */
     @Override
     public boolean hasAccount(UUID uuid) {
-        return false;
+        return this.hasAccount(uuid.toString());
     }
 
     /**
@@ -67,7 +89,19 @@ public class FeEconomyService implements EconomyService {
      */
     @Override
     public boolean hasAccount(String identifier) {
-        return false;
+
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
+
+            ResultSet resultSet = conn.getMetaData().getTables(null, null, identifier, null);
+
+            return resultSet.next();
+
+        } catch(SQLException e) {
+
+            FedorasEconomy.getLogger().error("SQL Error", e);
+
+            return false;
+        }
     }
 
     /**
@@ -84,7 +118,13 @@ public class FeEconomyService implements EconomyService {
      */
     @Override
     public Optional<UniqueAccount> getOrCreateAccount(UUID uuid) {
-        return null;
+
+        Optional<Account> account = this.getOrCreateAccount(uuid.toString());
+
+        if(!account.isPresent())
+            return Optional.empty();
+
+        return FeUniqueAccount.fromAccount(account.get()).map((a) -> (UniqueAccount) a);
     }
 
     /**
@@ -103,7 +143,19 @@ public class FeEconomyService implements EconomyService {
      */
     @Override
     public Optional<Account> getOrCreateAccount(String identifier) {
-        return null;
+
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
+
+            int update = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + identifier + "(currency VARCHAR(255), balance DECIMAL)").executeUpdate();
+
+            return Optional.of(new FeVirtualAccount(identifier)).map((a) -> (Account) a);
+
+        } catch(SQLException e) {
+
+            FedorasEconomy.getLogger().error("SQL Error", e);
+
+            return Optional.empty();
+        }
     }
 
     /**
@@ -114,6 +166,6 @@ public class FeEconomyService implements EconomyService {
      */
     @Override
     public void registerContextCalculator(ContextCalculator<Account> calculator) {
-
+        // do nothing
     }
 }

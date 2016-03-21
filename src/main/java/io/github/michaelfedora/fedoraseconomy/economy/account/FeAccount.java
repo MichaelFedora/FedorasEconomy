@@ -1,8 +1,8 @@
 package io.github.michaelfedora.fedoraseconomy.economy.account;
 
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
-import io.github.michaelfedora.fedoraseconomy.database.DatabaseManager;
-import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
+import io.github.michaelfedora.fedoraseconomy.economy.event.FeEconomyTransactionEvent;
+import io.github.michaelfedora.fedoraseconomy.economy.event.FeEconomyTransferEvent;
 import io.github.michaelfedora.fedoraseconomy.economy.transaction.FeTransactionResult;
 import io.github.michaelfedora.fedoraseconomy.economy.transaction.FeTransferResult;
 import org.spongepowered.api.Sponge;
@@ -18,10 +18,8 @@ import org.spongepowered.api.service.economy.transaction.*;
 import org.spongepowered.api.text.Text;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.math.RoundingMode;
+import java.sql.*;
 import java.util.*;
 
 /**
@@ -77,17 +75,17 @@ public abstract class FeAccount implements Account {
      * {@link Currency}, with the specified {@link Context}s.
      * <p>
      * <p>If this method returns <code>false</code>, then {@link #getDefaultBalance(Currency)}
-     * will be used when retrieving a balance for the specifid {@link Currency} with
+     * will be used when retrieving a balance for the specified {@link Currency} with
      * the specified {@link Context}s.</p>
      *
      * @param currency The {@link Currency} to determine if a balance is set for.
      * @param contexts The {@link Context}s to use with the {@link Currency}.
-     * @return Whether this account has a set balance for the speicified {@link Currency} and {@link Context}s
+     * @return Whether this account has a set balance for the specified {@link Currency} and {@link Context}s
      */
     @Override
     public boolean hasBalance(Currency currency, Set<Context> contexts) {
 
-        try(Connection conn = DatabaseManager.getConnection()) {
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             PreparedStatement statement = conn.prepareStatement("SELECT 1 FROM " + this.identifier + " WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
@@ -120,7 +118,7 @@ public abstract class FeAccount implements Account {
     @Override
     public BigDecimal getBalance(Currency currency, Set<Context> contexts) {
 
-        try(Connection conn = DatabaseManager.getConnection()) {
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
@@ -151,7 +149,7 @@ public abstract class FeAccount implements Account {
      * {@link Account}.
      * See {@link #setBalance(Currency, BigDecimal, Cause, Set)}  to set values.</p>
      *
-     * @param contexts the set of {@link Context}s to use with the speciied amounts.
+     * @param contexts the set of {@link Context}s to use with the specified amounts.
      * @return {@link Map} of {@link Currency} to {@link BigDecimal} amounts that this
      * account holds.
      */
@@ -161,12 +159,16 @@ public abstract class FeAccount implements Account {
         Map<Currency, BigDecimal> balances = new HashMap<>();
         Set<Currency> currencies;
         try {
+
             currencies = Sponge.getServiceManager().provide(EconomyService.class).orElseThrow(Exception::new).getCurrencies();
+
         } catch(Exception e) {
-            return null;
+
+            FedorasEconomy.getLogger().error("Could not get EconomyService!", e);
+            return balances;
         }
 
-        try(Connection conn = DatabaseManager.getConnection()) {
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + this.identifier);
 
@@ -209,11 +211,14 @@ public abstract class FeAccount implements Account {
     @Override
     public TransactionResult setBalance(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
 
+        FeTransactionResult result;
+
+        amount = amount.setScale(currency.getDefaultFractionDigits(), RoundingMode.FLOOR);
         BigDecimal old_bal = BigDecimal.ZERO;
         TransactionType trans_type = TransactionTypes.TRANSFER;
         int update = 0;
 
-        try(Connection conn = DatabaseManager.getConnection()) {
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
@@ -257,14 +262,19 @@ public abstract class FeAccount implements Account {
                 update = statement.executeUpdate();
             }
 
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, trans_type);
+
         } catch(SQLException e) {
             FedorasEconomy.getLogger().error("SQL Error", e);
-            return new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, trans_type);
+
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, trans_type);
         }
 
         // Do something with `update`?
 
-        return new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, trans_type);
+        FeEconomyTransactionEvent.of(result, cause).fire();
+
+        return result;
     }
 
     /**
@@ -287,7 +297,7 @@ public abstract class FeAccount implements Account {
             return null;
         }
 
-        try(Connection conn = DatabaseManager.getConnection()) {
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             PreparedStatement statement = conn.prepareStatement("SELECT currency FROM " + this.identifier);
 
@@ -343,9 +353,12 @@ public abstract class FeAccount implements Account {
     @Override
     public TransactionResult deposit(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
 
+        FeTransactionResult result;
+
+        amount = amount.setScale(currency.getDefaultFractionDigits(), RoundingMode.FLOOR);
         int update = 0;
 
-        try(Connection conn = DatabaseManager.getConnection()) {
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
@@ -371,21 +384,26 @@ public abstract class FeAccount implements Account {
                 update = statement.executeUpdate();
             }
 
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.DEPOSIT);
+
         } catch(SQLException e) {
             FedorasEconomy.getLogger().error("SQL Error", e);
-            return new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.DEPOSIT);
+
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.DEPOSIT);
         }
 
         // Do something with `update`?
 
-        return new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.DEPOSIT);
+        FeEconomyTransactionEvent.of(result, cause).fire();
+
+        return result;
     }
 
     /**
      * Withdraws the specified amount of the specified {@link Currency} from this account,
      * using the specified {@link Context}s.
      *
-     * @param currency The {@link Currency} to deposit the specifie amount for
+     * @param currency The {@link Currency} to deposit the specified amount for
      * @param amount   The amount to deposit for the specified {@link Currency}
      * @param cause    The {@link Cause} for the transaction
      * @param contexts The {@link Context}s to use with the specified {@link Currency}
@@ -394,9 +412,12 @@ public abstract class FeAccount implements Account {
     @Override
     public TransactionResult withdraw(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
 
+        FeTransactionResult result;
+
+        amount = amount.setScale(currency.getDefaultFractionDigits(), RoundingMode.FLOOR);
         int update = 0;
 
-        try(Connection conn = DatabaseManager.getConnection()) {
+        try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
@@ -434,14 +455,19 @@ public abstract class FeAccount implements Account {
 
             }
 
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.WITHDRAW);
+
         } catch(SQLException e) {
             FedorasEconomy.getLogger().error("SQL Error", e);
-            return new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.DEPOSIT);
+
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.WITHDRAW);
         }
 
         // Do something with `update`?
 
-        return new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.WITHDRAW);
+        FeEconomyTransactionEvent.of(result, cause).fire();
+
+        return result;
     }
 
     /**
@@ -461,23 +487,57 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransferResult transfer(Account to, Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
-        if(!hasBalance(currency, contexts))
-            return new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
-        if(getBalance(currency, contexts).compareTo(amount) < 0)
-            return new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
+
+        FeTransferResult transferResult;
+
+        amount = amount.setScale(currency.getDefaultFractionDigits(), RoundingMode.FLOOR);
+
+        if(!hasBalance(currency, contexts) && this.getDefaultBalance(currency).compareTo(amount) < 0) {
+
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
+
+            FeEconomyTransferEvent.of(transferResult, cause).fire();
+
+            return transferResult;
+        }
+
+        if(getBalance(currency, contexts).compareTo(amount) < 0) {
+
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
+
+            FeEconomyTransferEvent.of(transferResult, cause).fire();
+
+            return transferResult;
+        }
 
         TransactionResult result = withdraw(currency, amount, cause, contexts);
+
         if(result.getResult() != ResultType.SUCCESS) {
-            return new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+
+            FeEconomyTransferEvent.of(transferResult, cause).fire();
+
+            return transferResult;
         }
 
         result = to.deposit(currency, amount, cause, contexts);
         if(result.getResult() != ResultType.SUCCESS) {
+
             deposit(currency, amount, cause, contexts);
-            return new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+
+            FeEconomyTransferEvent.of(transferResult, cause).fire();
+
+            return transferResult;
         }
 
-        return new FeTransferResult(this, to, currency, amount, contexts, ResultType.SUCCESS);
+        transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.SUCCESS);
+
+        FeEconomyTransferEvent.of(transferResult, cause).fire();
+
+        return transferResult;
     }
 
     /**

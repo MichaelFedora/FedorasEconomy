@@ -4,17 +4,16 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.economy.EconomyTransactionEvent;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
-import org.spongepowered.api.service.economy.transaction.TransferResult;
 
 /**
- * Created by Michael on 3/21/2016.
+ * Created by Michael on 3/18/2016.
  */
-public class FeEconomyTransferEvent implements EconomyTransactionEvent {
+public class FeEconomyTransactionEvent implements EconomyTransactionEvent {
 
-    private TransferResult result;
+    private TransactionResult result;
     private Cause cause;
 
-    public FeEconomyTransferEvent(TransferResult result, Cause cause) {
+    public FeEconomyTransactionEvent(TransactionResult result, Cause cause) {
         this.result = result;
         this.cause = cause;
     }
@@ -46,11 +45,4 @@ public class FeEconomyTransferEvent implements EconomyTransactionEvent {
     public TransactionResult getTransactionResult() {
         return this.result;
     }
-
-    /**
-     * Gets the {@link TransferResult} for the transaction that occured.
-     *
-     * @return The {@link TransferResult}
-     */
-    public TransferResult getTransferResult() { return this.result; }
 }
