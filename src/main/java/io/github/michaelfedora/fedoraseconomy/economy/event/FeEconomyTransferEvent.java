@@ -9,6 +9,14 @@ import org.spongepowered.api.service.economy.transaction.TransactionResult;
  */
 public class FeEconomyTransferEvent implements EconomyTransactionEvent {
 
+    private TransactionResult result;
+    private Cause cause;
+
+    public FeEconomyTransferEvent(TransactionResult result, Cause cause) {
+        this.result = result;
+        this.cause = cause;
+    }
+
     /**
      * Get the cause for the event.
      *
@@ -16,7 +24,7 @@ public class FeEconomyTransferEvent implements EconomyTransactionEvent {
      */
     @Override
     public Cause getCause() {
-        return null;
+        return this.cause;
     }
 
     /**
@@ -26,6 +34,6 @@ public class FeEconomyTransferEvent implements EconomyTransactionEvent {
      */
     @Override
     public TransactionResult getTransactionResult() {
-        return null;
+        return this.result;
     }
 }

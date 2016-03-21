@@ -1,14 +1,485 @@
 package io.github.michaelfedora.fedoraseconomy.economy.account;
 
+import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
+import io.github.michaelfedora.fedoraseconomy.database.DatabaseManager;
+import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
+import io.github.michaelfedora.fedoraseconomy.economy.transaction.FeTransactionResult;
+import io.github.michaelfedora.fedoraseconomy.economy.transaction.FeTransferResult;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.service.context.Context;
+import org.spongepowered.api.service.context.ContextCalculator;
+import org.spongepowered.api.service.economy.Currency;
+import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.Account;
+import org.spongepowered.api.service.economy.account.UniqueAccount;
+import org.spongepowered.api.service.economy.account.VirtualAccount;
+import org.spongepowered.api.service.economy.transaction.*;
+import org.spongepowered.api.text.Text;
 
-import java.util.Set;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Created by Michael on 3/18/2016.
  */
 public abstract class FeAccount implements Account {
+
+    private String identifier;
+    private Text displayName;
+
+    public FeAccount(String identifier, Text displayName) {
+        this.identifier = identifier;
+        this.displayName = displayName;
+    }
+
+    /**
+     * Gets the display name for this account.
+     * <p>
+     * <p>This should be used by plugins to get a human-readable name for an
+     * account, regardless of the specific type ({@link UniqueAccount} or
+     * {@link VirtualAccount}).</p>
+     * <p>
+     * <p>Its contents are dependent on the provider of {@link EconomyService}.
+     * For example, an economy plugin could allow players to configure the
+     * display name of their account</p>.
+     *
+     * @return the display name for this account.
+     */
+    @Override
+    public Text getDisplayName() {
+        return this.displayName;
+    }
+
+    /**
+     * Gets the default balance of this account for the specified
+     * {@link Currency}.
+     * <p>
+     * <p>The default balance is used when the balance is retrieved for the
+     * first time for a given {@link Currency} on this account, or if no
+     * balance is available for the {@link Context}s used when retrieving
+     * a balance.</p>
+     *
+     * @param currency the currency to get the default balance for.
+     * @return The default balance for the specified {@link Currency}.
+     */
+    @Override
+    public BigDecimal getDefaultBalance(Currency currency) {
+        return BigDecimal.ZERO;
+    }
+
+    /**
+     * Returns whether this account has a set balance for the specified
+     * {@link Currency}, with the specified {@link Context}s.
+     * <p>
+     * <p>If this method returns <code>false</code>, then {@link #getDefaultBalance(Currency)}
+     * will be used when retrieving a balance for the specifid {@link Currency} with
+     * the specified {@link Context}s.</p>
+     *
+     * @param currency The {@link Currency} to determine if a balance is set for.
+     * @param contexts The {@link Context}s to use with the {@link Currency}.
+     * @return Whether this account has a set balance for the speicified {@link Currency} and {@link Context}s
+     */
+    @Override
+    public boolean hasBalance(Currency currency, Set<Context> contexts) {
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            PreparedStatement statement = conn.prepareStatement("SELECT 1 FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            statement.setString(1, currency.getId());
+
+            ResultSet resultSet = statement.executeQuery();
+            if(!resultSet.next())
+                return false;
+
+        } catch(SQLException e) {
+            FedorasEconomy.getLogger().error("SQL Error", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns a {@link BigDecimal} representative of the balance stored within this
+     * {@link Account} for the {@link Currency} given and the set of {@link Context}s.
+     * <p>
+     * <p>The default result when the account does not have a balance of the
+     * given {@link Currency} should be {@link BigDecimal#ZERO}.</p>
+     * <p>
+     * <p>The balance may be unavailable depending on the set of {@link Context}s used.</p>
+     *
+     * @param currency a {@link Currency} to check the balance of
+     * @param contexts a set of contexts to check the balance against
+     * @return he value for the specified {@link Currency} with the specified {@link Context}s.
+     */
+    @Override
+    public BigDecimal getBalance(Currency currency, Set<Context> contexts) {
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            statement.setString(1, currency.getId());
+
+            ResultSet resultSet = statement.executeQuery();
+            if(resultSet.next()) {
+                return resultSet.getBigDecimal("balance");
+            }
+
+        } catch(SQLException e) {
+            FedorasEconomy.getLogger().error("SQL Error", e);
+        }
+
+        return this.getDefaultBalance(currency);
+    }
+
+    /**
+     * Returns a {@link Map} of all currently set balances the account holds within
+     * the set of {@link Context}s.
+     * <p>
+     * <p>Amounts may differ depending on the {@link Context}s specified and
+     * the implementation. The set of {@link Context}s may be empty.</p>
+     * <p>
+     * <p>{@link Currency} amounts which are 0 may or may not be included in the
+     * returned mapping.</p>
+     * <p>
+     * <p>Changes to the returned {@link Map} will not be reflected in the underlying
+     * {@link Account}.
+     * See {@link #setBalance(Currency, BigDecimal, Cause, Set)}  to set values.</p>
+     *
+     * @param contexts the set of {@link Context}s to use with the speciied amounts.
+     * @return {@link Map} of {@link Currency} to {@link BigDecimal} amounts that this
+     * account holds.
+     */
+    @Override
+    public Map<Currency, BigDecimal> getBalances(Set<Context> contexts) {
+
+        Map<Currency, BigDecimal> balances = new HashMap<>();
+        Set<Currency> currencies;
+        try {
+            currencies = Sponge.getServiceManager().provide(EconomyService.class).orElseThrow(Exception::new).getCurrencies();
+        } catch(Exception e) {
+            return null;
+        }
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + this.identifier);
+
+            ResultSet resultSet = statement.executeQuery();
+            while(resultSet.next()) {
+
+                Optional<Currency> currency = Optional.empty();
+
+                for(Currency c : currencies) {
+                    if(c.getId().equals(resultSet.getString("currency"))) {
+                        currency = Optional.of(c);
+                        break;
+                    }
+                }
+
+                if(currency.isPresent())
+                    balances.put(currency.get(), resultSet.getBigDecimal("balance"));
+            }
+
+        } catch(SQLException e) {
+            FedorasEconomy.getLogger().error("SQL Error", e);
+        }
+
+        return balances;
+    }
+
+    /**
+     * Sets the balance for this account to the specified amount for
+     * the specified {@link Currency}, with the specified set of {@link Context}s.
+     * <p>
+     * <p>Negative balances may or may not be supported depending on
+     * the {@link Currency} specified and the implementation.</p>
+     *
+     * @param currency The {@link Currency} to set the balance for
+     * @param amount   The amount to set for the specified {@link Currency}
+     * @param cause    The {@link Cause} for the transaction
+     * @param contexts The set of {@link Context}s to use with the specified {@link Currency}
+     * @return The result of the transaction
+     */
+    @Override
+    public TransactionResult setBalance(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+
+        BigDecimal old_bal = BigDecimal.ZERO;
+        TransactionType trans_type = TransactionTypes.TRANSFER;
+        int update = 0;
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            statement.setString(1, currency.getId());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if(!resultSet.next()) {
+
+                if(amount.compareTo(old_bal) > 0) {
+
+                    trans_type = TransactionTypes.DEPOSIT;
+
+                } else if(amount.compareTo(old_bal) < 0) {
+
+                    trans_type = TransactionTypes.WITHDRAW;
+                } // else if equal, it will stay the same (TransactionTypes.TRANSFER)
+
+                statement = conn.prepareStatement("INSERT INTO " + this.identifier + "(currency, balance) values (?, ?)");
+                statement.setString(1, currency.getId());
+                statement.setBigDecimal(2, amount);
+
+                update = statement.executeUpdate();
+
+            } else {
+
+                old_bal = resultSet.getBigDecimal("balance");
+
+                if(amount.compareTo(old_bal) > 0) {
+
+                    trans_type = TransactionTypes.DEPOSIT;
+
+                } else if(amount.compareTo(old_bal) < 0) {
+
+                    trans_type = TransactionTypes.WITHDRAW;
+                } // else if equal, it will stay the same (TransactionTypes.TRANSFER)
+
+                statement = conn.prepareStatement("UPDATE " + this.identifier + " SET balance=? WHERE currency=?");
+                statement.setBigDecimal(1, amount);
+                statement.setString(2, currency.getId());
+
+                update = statement.executeUpdate();
+            }
+
+        } catch(SQLException e) {
+            FedorasEconomy.getLogger().error("SQL Error", e);
+            return new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, trans_type);
+        }
+
+        // Do something with `update`?
+
+        return new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, trans_type);
+    }
+
+    /**
+     * Resets the balances for all {@link Currency}s used on this account to their
+     * default values ({@link #getDefaultBalance(Currency)}), using the specified {@link Context}s.
+     *
+     * @param cause    The {@link Cause} for the transaction
+     * @param contexts the {@link Context}s to use when resetting the balances.
+     * @return A map of {@link Currency} to {@link TransactionResult}. Each
+     * entry represents the result of resetting a particular currency.
+     */
+    @Override
+    public Map<Currency, TransactionResult> resetBalances(Cause cause, Set<Context> contexts) {
+
+        Map<Currency, TransactionResult> transactions = new HashMap<>();
+        Set<Currency> currencies;
+        try {
+            currencies = Sponge.getServiceManager().provide(EconomyService.class).orElseThrow(Exception::new).getCurrencies();
+        } catch(Exception e) {
+            return null;
+        }
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            PreparedStatement statement = conn.prepareStatement("SELECT currency FROM " + this.identifier);
+
+            ResultSet resultSet = statement.executeQuery();
+            while(resultSet.next()) {
+
+                Optional<Currency> currency = Optional.empty();
+
+                for(Currency c : currencies) {
+                    if(c.getId().equals(resultSet.getString("currency"))) {
+                        currency = Optional.of(c);
+                        break;
+                    }
+                }
+
+                if(currency.isPresent()) {
+                    TransactionResult tr = this.resetBalance(currency.get(), cause, contexts);
+                    transactions.put(currency.get(), tr);
+                }
+            }
+
+        } catch(SQLException e) {
+            FedorasEconomy.getLogger().error("SQL Error", e);
+        }
+
+        return transactions;
+    }
+
+    /**
+     * Resets the balance for the specified {@link Currency} to its default value
+     * ({@link #getDefaultBalance(Currency)}), using the specified {@link Context}s.
+     *
+     * @param currency The {@link Currency} to reset the balance for
+     * @param cause    The {@link Cause} for the transaction
+     * @param contexts The {@link Context}s to use when resetting the balance
+     * @return The result of the transaction
+     */
+    @Override
+    public TransactionResult resetBalance(Currency currency, Cause cause, Set<Context> contexts) {
+        return this.setBalance(currency, getDefaultBalance(currency), cause, contexts);
+    }
+
+    /**
+     * Deposits the specified amount of the specified {@link Currency} to this account,
+     * using the specified {@link Context}s.
+     *
+     * @param currency The {@link Currency} to deposit the specified amount for
+     * @param amount   The amount to deposit for the specified {@link Currency}.
+     * @param cause    The {@link Cause} for the transaction
+     * @param contexts the {@link Context}s to use with the specified {@link Currency}
+     * @return The result of the transaction
+     */
+    @Override
+    public TransactionResult deposit(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+
+        int update = 0;
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            statement.setString(1, currency.getId());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if(!resultSet.next()) {
+
+                statement = conn.prepareStatement("INSERT INTO " + this.identifier + "(currency, balance) values (?, ?)");
+                statement.setString(1, currency.getId());
+                statement.setBigDecimal(2, amount);
+
+                update = statement.executeUpdate();
+
+            } else {
+
+                BigDecimal old_balance = resultSet.getBigDecimal("balance)");
+
+                statement = conn.prepareStatement("UPDATE " + this.identifier + " SET balance=? WHERE currency=?");
+                statement.setBigDecimal(1, old_balance.add(amount));
+                statement.setString(2, currency.getId());
+
+                update = statement.executeUpdate();
+            }
+
+        } catch(SQLException e) {
+            FedorasEconomy.getLogger().error("SQL Error", e);
+            return new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.DEPOSIT);
+        }
+
+        // Do something with `update`?
+
+        return new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.DEPOSIT);
+    }
+
+    /**
+     * Withdraws the specified amount of the specified {@link Currency} from this account,
+     * using the specified {@link Context}s.
+     *
+     * @param currency The {@link Currency} to deposit the specifie amount for
+     * @param amount   The amount to deposit for the specified {@link Currency}
+     * @param cause    The {@link Cause} for the transaction
+     * @param contexts The {@link Context}s to use with the specified {@link Currency}
+     * @return The result of the transaction
+     */
+    @Override
+    public TransactionResult withdraw(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+
+        int update = 0;
+
+        try(Connection conn = DatabaseManager.getConnection()) {
+
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            statement.setString(1, currency.getId());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            // take a loan if they don't have enough funds?
+
+            if(!resultSet.next()) {
+
+                BigDecimal diff = this.getDefaultBalance(currency).subtract(amount);
+
+                if(diff.compareTo(BigDecimal.ZERO) >= 0) {
+
+                    statement = conn.prepareStatement("INSERT INTO " + this.identifier + "(currency, balance) values (?, ?)");
+                    statement.setString(1, currency.getId());
+                    statement.setBigDecimal(2, diff);
+
+                    update = statement.executeUpdate();
+
+                } else {
+
+                    return new FeTransactionResult(this, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS, TransactionTypes.WITHDRAW);
+                }
+
+            } else {
+
+                BigDecimal old_balance = resultSet.getBigDecimal("balance)");
+
+                statement = conn.prepareStatement("UPDATE " + this.identifier + " SET balance=? WHERE currency=?");
+                statement.setBigDecimal(1, old_balance.add(amount));
+                statement.setString(2, currency.getId());
+
+                update = statement.executeUpdate();
+
+            }
+
+        } catch(SQLException e) {
+            FedorasEconomy.getLogger().error("SQL Error", e);
+            return new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.DEPOSIT);
+        }
+
+        // Do something with `update`?
+
+        return new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.WITHDRAW);
+    }
+
+    /**
+     * Transfers the specified amount of the specified {@link Currency} from this account
+     * the destination account, using the specified {@link Context}s.
+     * <p>
+     * <p>This operation is a merged {@link #withdraw(Currency, BigDecimal, Cause, Set)}  from this account
+     * with a {@link #deposit(Currency, BigDecimal, Cause, Set)}  into the specified account.</p>
+     *
+     * @param to       the Account to transfer the amounts to.
+     * @param currency The {@link Currency} to transfer the specified amount for
+     * @param amount   The amount to transfer for the specified {@link Currency}
+     * @param cause    The {@link Cause} for the transaction
+     * @param contexts The {@link Context}s to use with the specified {@link Currency} and account
+     * @return a {@link TransferResult} representative of the effects of the
+     * operation
+     */
+    @Override
+    public TransferResult transfer(Account to, Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+        if(!hasBalance(currency, contexts))
+            return new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
+        if(getBalance(currency, contexts).compareTo(amount) < 0)
+            return new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
+
+        TransactionResult result = withdraw(currency, amount, cause, contexts);
+        if(result.getResult() != ResultType.SUCCESS) {
+            return new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+        }
+
+        result = to.deposit(currency, amount, cause, contexts);
+        if(result.getResult() != ResultType.SUCCESS) {
+            deposit(currency, amount, cause, contexts);
+            return new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+        }
+
+        return new FeTransferResult(this, to, currency, amount, contexts, ResultType.SUCCESS);
+    }
+
     /**
      * Returns the identifier associated with this Contextual. Not guaranteed to
      * be human-readable.
@@ -17,7 +488,7 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public String getIdentifier() {
-        return null;
+        return this.identifier;
     }
 
     /**
@@ -30,6 +501,6 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public Set<Context> getActiveContexts() {
-        return null;
+        return new HashSet<>();
     }
 }
