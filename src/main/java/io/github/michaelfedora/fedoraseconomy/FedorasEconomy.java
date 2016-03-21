@@ -7,12 +7,14 @@
 package io.github.michaelfedora.fedoraseconomy;
 
 import com.google.inject.Inject;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.*;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import io.github.michaelfedora.fedoraseconomy.registry.CurrencyRegistry;
 import me.flibio.updatifier.Updatifier;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.CommandManager;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
@@ -77,14 +79,8 @@ public class FedorasEconomy {
     // ex: 102 | 2016-03-21 10:45:29 | {uuid} | TRANSFER | 7 | fedorascurrency:doubloons
 
     private LinkedHashMap<List<String>, CommandSpec> subCommands;
-    public static LinkedHashMap<List<String>, CommandSpec> getSubCommands() { return instance.subCommands; }
-    private HashMap<String, LinkedHashMap<List<String>, CommandSpec>> grandChildCommands;
-    public static Optional<LinkedHashMap<List<String>, CommandSpec>> getGrandChildCommands(String key) {
-
-        if(instance.grandChildCommands.containsKey(key))
-            return Optional.of(instance.grandChildCommands.get(key));
-
-        return Optional.empty();
+    public static LinkedHashMap<List<String>, CommandSpec> getSubCommands() {
+        return instance.subCommands;
     }
 
     @Listener
@@ -103,7 +99,7 @@ public class FedorasEconomy {
 
         // register registry
         CurrencyRegistry currencyRegistry = new CurrencyRegistry();
-        currencyRegistry.add(defaultCurrency);
+        currencyRegistry.registerAdditionalCatalog(defaultCurrency);
         Sponge.getRegistry().registerModule(Currency.class, currencyRegistry);
 
         // register api
@@ -115,7 +111,17 @@ public class FedorasEconomy {
     }
 
     private void registerCommands() {
+        CommandManager commandManager = Sponge.getCommandManager();
 
+        commandManager.register(this, BalanceExecutor.create(), BalanceExecutor.ALIASES);
+        commandManager.register(this, PayExecutor.create(), PayExecutor.ALIASES);
+
+        subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
+        subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
+        subCommands.put(FeSetExecutor.ALIASES, FeSetExecutor.create());
+        subCommands.put(FeAdjustExecutor.ALIASES, FeAdjustExecutor.create());
+
+        commandManager.register(this, FeExecutor.create(subCommands), FeExecutor.ALIASES);
     }
 
     @Listener
