@@ -6,9 +6,7 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColor;
-import org.spongepowered.api.text.format.TextFormat;
-import org.spongepowered.api.text.format.TextStyle;
+import org.spongepowered.api.text.format.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -27,10 +25,9 @@ public class FeCurrency implements Currency {
     private boolean rightSideSymbol; // default left
 
     private int valueScale;
-    private TextColor valueColor;
-    private TextStyle valueStyle;
+    private TextFormat valueFormat;
 
-    public FeCurrency(String identifier, Text displayName, Text pluralDisplayName, Text symbol, boolean rightSideSymbol, int valueScale, TextColor valueColor, TextStyle valueStyle) {
+    public FeCurrency(String identifier, Text displayName, Text pluralDisplayName, Text symbol, boolean rightSideSymbol, int valueScale, TextFormat valueFormat) {
 
         this.identifier = identifier;
 
@@ -41,9 +38,21 @@ public class FeCurrency implements Currency {
         this.rightSideSymbol = rightSideSymbol;
 
         this.valueScale = valueScale;
-        this.valueColor = valueColor;
-        this.valueStyle = valueStyle;
+        this.valueFormat = valueFormat;
     }
+
+    public static FeCurrency of(Currency c) {
+
+        if(c instanceof FeCurrency)
+            return (FeCurrency) c;
+
+        return new FeCurrency(c.getId(), c.getDisplayName(), c.getPluralDisplayName(), c.getSymbol(),
+                false, 2, Text.of(TextColors.GRAY, TextStyles.OBFUSCATED).getFormat()); // so evil >:>
+    }
+
+    public boolean getRightSideSymbol() { return this.rightSideSymbol; }
+    public int getValueScale() { return this.valueScale; }
+    public TextFormat getValueFormat() { return this.valueFormat; }
 
     /**
      * The currency's display name, in singular form. Ex: Dollar.
@@ -96,7 +105,7 @@ public class FeCurrency implements Currency {
 
         amount = amount.setScale(this.valueScale, RoundingMode.FLOOR);
 
-        Text formattedAmount = Text.of(this.valueColor, this.valueStyle, amount);
+        Text formattedAmount = Text.of(this.valueFormat, amount);
 
         if(this.symbol.compareTo(Text.EMPTY) > 0) {
 
@@ -136,7 +145,7 @@ public class FeCurrency implements Currency {
 
         amount = amount.setScale(numFractionDigits, RoundingMode.FLOOR);
 
-        Text formattedAmount = Text.of(this.valueColor, amount);
+        Text formattedAmount = Text.of(this.valueFormat, amount);
 
         if(this.symbol.compareTo(Text.EMPTY) > 0) {
 

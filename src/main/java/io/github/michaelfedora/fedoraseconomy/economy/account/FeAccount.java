@@ -87,7 +87,7 @@ public abstract class FeAccount implements Account {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            PreparedStatement statement = conn.prepareStatement("SELECT 1 FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            PreparedStatement statement = conn.prepareStatement("SELECT 1 FROM `" + this.identifier + "` WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
 
             ResultSet resultSet = statement.executeQuery();
@@ -120,7 +120,7 @@ public abstract class FeAccount implements Account {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM `" + this.identifier + "` WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
 
             ResultSet resultSet = statement.executeQuery();
@@ -170,7 +170,7 @@ public abstract class FeAccount implements Account {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + this.identifier);
+            PreparedStatement statement = conn.prepareStatement("SELECT * FROM `" + this.identifier + "`");
 
             ResultSet resultSet = statement.executeQuery();
             while(resultSet.next()) {
@@ -220,7 +220,7 @@ public abstract class FeAccount implements Account {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM `" + this.identifier + "` WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
 
             ResultSet resultSet = statement.executeQuery();
@@ -236,7 +236,7 @@ public abstract class FeAccount implements Account {
                     trans_type = TransactionTypes.WITHDRAW;
                 } // else if equal, it will stay the same (TransactionTypes.TRANSFER)
 
-                statement = conn.prepareStatement("INSERT INTO " + this.identifier + "(currency, balance) values (?, ?)");
+                statement = conn.prepareStatement("INSERT INTO `" + this.identifier + "`(currency, balance) values (?, ?)");
                 statement.setString(1, currency.getId());
                 statement.setBigDecimal(2, amount);
 
@@ -255,7 +255,7 @@ public abstract class FeAccount implements Account {
                     trans_type = TransactionTypes.WITHDRAW;
                 } // else if equal, it will stay the same (TransactionTypes.TRANSFER)
 
-                statement = conn.prepareStatement("UPDATE " + this.identifier + " SET balance=? WHERE currency=?");
+                statement = conn.prepareStatement("UPDATE `" + this.identifier + "` SET balance=? WHERE currency=?");
                 statement.setBigDecimal(1, amount);
                 statement.setString(2, currency.getId());
 
@@ -299,7 +299,7 @@ public abstract class FeAccount implements Account {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            PreparedStatement statement = conn.prepareStatement("SELECT currency FROM " + this.identifier);
+            PreparedStatement statement = conn.prepareStatement("SELECT currency FROM `" + this.identifier + "`");
 
             ResultSet resultSet = statement.executeQuery();
             while(resultSet.next()) {
@@ -360,14 +360,14 @@ public abstract class FeAccount implements Account {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM `" + this.identifier + "` WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
 
             ResultSet resultSet = statement.executeQuery();
 
             if(!resultSet.next()) {
 
-                statement = conn.prepareStatement("INSERT INTO " + this.identifier + "(currency, balance) values (?, ?)");
+                statement = conn.prepareStatement("INSERT INTO `" + this.identifier + "`(currency, balance) values (?, ?)");
                 statement.setString(1, currency.getId());
                 statement.setBigDecimal(2, amount);
 
@@ -375,9 +375,9 @@ public abstract class FeAccount implements Account {
 
             } else {
 
-                BigDecimal old_balance = resultSet.getBigDecimal("balance)");
+                BigDecimal old_balance = resultSet.getBigDecimal("balance");
 
-                statement = conn.prepareStatement("UPDATE " + this.identifier + " SET balance=? WHERE currency=?");
+                statement = conn.prepareStatement("UPDATE `" + this.identifier + "` SET balance=? WHERE currency=?");
                 statement.setBigDecimal(1, old_balance.add(amount));
                 statement.setString(2, currency.getId());
 
@@ -419,20 +419,22 @@ public abstract class FeAccount implements Account {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM " + this.identifier + " WHERE currency=? LIMIT 1");
+            PreparedStatement statement = conn.prepareStatement("SELECT balance FROM `" + this.identifier + "` WHERE currency=? LIMIT 1");
             statement.setString(1, currency.getId());
 
             ResultSet resultSet = statement.executeQuery();
 
             // take a loan if they don't have enough funds?
 
+            BigDecimal diff;
+
             if(!resultSet.next()) {
 
-                BigDecimal diff = this.getDefaultBalance(currency).subtract(amount);
+                 diff = this.getDefaultBalance(currency).subtract(amount);
 
                 if(diff.compareTo(BigDecimal.ZERO) >= 0) {
 
-                    statement = conn.prepareStatement("INSERT INTO " + this.identifier + "(currency, balance) values (?, ?)");
+                    statement = conn.prepareStatement("INSERT INTO `" + this.identifier + "`(currency, balance) values (?, ?)");
                     statement.setString(1, currency.getId());
                     statement.setBigDecimal(2, diff);
 
@@ -445,10 +447,10 @@ public abstract class FeAccount implements Account {
 
             } else {
 
-                BigDecimal old_balance = resultSet.getBigDecimal("balance)");
+                diff = resultSet.getBigDecimal("balance").subtract(amount);
 
-                statement = conn.prepareStatement("UPDATE " + this.identifier + " SET balance=? WHERE currency=?");
-                statement.setBigDecimal(1, old_balance.add(amount));
+                statement = conn.prepareStatement("UPDATE `" + this.identifier + "` SET balance=? WHERE currency=?");
+                statement.setBigDecimal(1, diff);
                 statement.setString(2, currency.getId());
 
                 update = statement.executeUpdate();
@@ -492,7 +494,7 @@ public abstract class FeAccount implements Account {
 
         amount = amount.setScale(currency.getDefaultFractionDigits(), RoundingMode.FLOOR);
 
-        if(!hasBalance(currency, contexts) && this.getDefaultBalance(currency).compareTo(amount) < 0) {
+        if(!this.hasBalance(currency, contexts) && this.getDefaultBalance(currency).compareTo(amount) < 0) {
 
             transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
 
@@ -501,7 +503,7 @@ public abstract class FeAccount implements Account {
             return transferResult;
         }
 
-        if(getBalance(currency, contexts).compareTo(amount) < 0) {
+        if(this.getBalance(currency, contexts).compareTo(amount) < 0) {
 
             transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
 
@@ -510,7 +512,7 @@ public abstract class FeAccount implements Account {
             return transferResult;
         }
 
-        TransactionResult result = withdraw(currency, amount, cause, contexts);
+        TransactionResult result = this.withdraw(currency, amount, cause, contexts);
 
         if(result.getResult() != ResultType.SUCCESS) {
 
@@ -524,7 +526,7 @@ public abstract class FeAccount implements Account {
         result = to.deposit(currency, amount, cause, contexts);
         if(result.getResult() != ResultType.SUCCESS) {
 
-            deposit(currency, amount, cause, contexts);
+            this.deposit(currency, amount, cause, contexts);
 
             transferResult = new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
 

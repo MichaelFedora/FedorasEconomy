@@ -146,7 +146,7 @@ public class FeEconomyService implements EconomyService {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            int update = conn.prepareStatement("CREATE TABLE IF NOT EXISTS " + identifier + "(currency VARCHAR(255), balance DECIMAL)").executeUpdate();
+            int update = conn.prepareStatement("CREATE TABLE IF NOT EXISTS `" + identifier + "`(currency VARCHAR(255), balance DECIMAL)").executeUpdate();
 
             return Optional.of(new FeVirtualAccount(identifier)).map((a) -> (Account) a);
 

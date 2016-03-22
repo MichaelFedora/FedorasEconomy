@@ -44,7 +44,7 @@ public class FeExecutor extends FeExecutorBase {
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        src.sendMessage(Text.of(TextColors.GOLD, TextStyles.BOLD, PluginInfo.NAME, " ", TextStyles.NONE, TextColors.GRAY, "v", TextColors.AQUA, PluginInfo.VERSION));
+        src.sendMessage(Text.of(TextColors.GOLD, TextStyles.BOLD, PluginInfo.NAME, TextStyles.RESET, TextColors.GRAY, ": v", TextColors.AQUA, PluginInfo.VERSION));
 
         return CommandResult.success();
     }

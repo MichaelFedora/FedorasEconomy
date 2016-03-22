@@ -6,12 +6,19 @@
  */
 package io.github.michaelfedora.fedoraseconomy;
 
+import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.*;
+import io.github.michaelfedora.fedoraseconomy.config.Config;
+import io.github.michaelfedora.fedoraseconomy.config.FeCurrencySerializer;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import io.github.michaelfedora.fedoraseconomy.registry.CurrencyRegistry;
 import me.flibio.updatifier.Updatifier;
+import ninja.leaping.configurate.ConfigurationOptions;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandManager;
@@ -48,7 +55,7 @@ public class FedorasEconomy {
     public static Logger getLogger() { return instance.logger; }
 
     @Inject
-    @ConfigDir(sharedRoot = false)
+    @ConfigDir(sharedRoot = true)
     private Path configDir; //TODO: Implement config
     public static Path getConfigDir() { return instance.configDir; }
 
@@ -76,7 +83,7 @@ public class FedorasEconomy {
     // ex: 101 | 2016-03-21 10:43:50 | null | DEPOSIT | 14.25 | fedorascurrency:coins
     // ex: 102 | 2016-03-21 10:45:29 | {uuid} | TRANSFER | 7 | fedorascurrency:doubloons
 
-    private LinkedHashMap<List<String>, CommandSpec> subCommands;
+    private LinkedHashMap<List<String>, CommandSpec> subCommands = new LinkedHashMap<>();
     public static LinkedHashMap<List<String>, CommandSpec> getSubCommands() {
         return instance.subCommands;
     }
@@ -86,7 +93,7 @@ public class FedorasEconomy {
         instance = this;
     }
 
-    public static Currency defaultCurrency = new FeCurrency("fedoraseconomy:default", Text.of(TextColors.GOLD, "Doubloon"), Text.of(TextColors.GOLD, "Doubloons"), Text.of(TextColors.GOLD, "d$"), false, 0, TextColors.GRAY, TextStyles.NONE);
+    public static FeCurrency defaultCurrency = new FeCurrency("currency:fedorians", Text.of(TextColors.AQUA, "Fedorian"), Text.of(TextColors.AQUA, "Fedorian", TextColors.DARK_PURPLE, "s"), Text.of(TextColors.AQUA, "f$"), false, 0, Text.of(TextColors.GOLD, TextStyles.NONE).getFormat());
 
     @Listener
     public void onInit(GameInitializationEvent gie) {
@@ -97,11 +104,51 @@ public class FedorasEconomy {
 
         // register registry
         CurrencyRegistry currencyRegistry = new CurrencyRegistry();
-        currencyRegistry.registerAdditionalCatalog(defaultCurrency);
         Sponge.getRegistry().registerModule(Currency.class, currencyRegistry);
 
+        // config stuff
+
+        /*TypeSerializerCollection serializers = TypeSerializers.getDefaultSerializers().newChild();
+        serializers.registerType(TypeToken.of(FeCurrency.class), new FeCurrencySerializer());
+        ConfigurationOptions options = ConfigurationOptions.defaults().setSerializers(serializers);*/
+        TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FeCurrency.class), new FeCurrencySerializer());
+
+        Config config = new Config();
+        config.load();
+        if(config.getNode("defaultCurrency").getValue() == null) {
+            try {
+                config.getNode("defaultCurrency").setComment("The default currency").setValue(TypeToken.of(FeCurrency.class), defaultCurrency);
+            } catch (ObjectMappingException e) {
+                logger.error("Could not map defaultCurrency!", e);
+            }
+        }
+        if(config.getNode("currencies").getValue() == null || !(config.getNode("currencies").getValue() instanceof List))
+            config.getNode("currencies").setValue(Collections.emptyList()).setComment("The list of currencies");
+        /*currencyRegistry.getAll().forEach((c) -> {
+
+            FeCurrency fc = (c instanceof FeCurrency) ? (FeCurrency) c : new FeCurrency(c);
+            try {
+                config.getNode("currencies").getAppendedNode().setValue(TypeToken.of(FeCurrency.class), fc);
+            } catch(ObjectMappingException e) {
+                logger.error("Could not map currency " + c.getName() + "!");
+            }
+        });*/
+        FeCurrency customDefaultCurrency = defaultCurrency;
+        try {
+
+            customDefaultCurrency = config.getNode("defaultCurrency").getValue(TypeToken.of(FeCurrency.class), defaultCurrency);
+            currencyRegistry.registerAdditionalCatalog(customDefaultCurrency);
+
+            List<FeCurrency> currencies = config.getNode("currencies").getList(TypeToken.of(FeCurrency.class));
+            currencies.forEach(currencyRegistry::registerAdditionalCatalog);
+
+        } catch(ObjectMappingException e) {
+            logger.error("Could not get currencies!", e);
+        }
+        config.save();
+
         // register api
-        Sponge.getServiceManager().setProvider(this, EconomyService.class, new FeEconomyService(defaultCurrency));
+        Sponge.getServiceManager().setProvider(this, EconomyService.class, new FeEconomyService(customDefaultCurrency));
 
         registerCommands();
 
@@ -116,6 +163,7 @@ public class FedorasEconomy {
 
         subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
         subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
+        subCommands.put(FeDetailsExecutor.ALIASES, FeDetailsExecutor.create());
         subCommands.put(FeSetExecutor.ALIASES, FeSetExecutor.create());
         subCommands.put(FeAddExecutor.ALIASES, FeAddExecutor.create());
 
@@ -124,6 +172,6 @@ public class FedorasEconomy {
 
     @Listener
     public void onLoadComplete(GameLoadCompleteEvent glce) {
-        // database stuff
+        // database stuff ..?
     }
 }
