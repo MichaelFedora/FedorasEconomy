@@ -10,6 +10,7 @@ import org.spongepowered.api.text.format.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.*;
 
 /**
  * Created by Michael on 3/18/2016.
@@ -26,18 +27,21 @@ public class FeCurrency implements Currency {
 
     private int valueScale;
     private TextFormat valueFormat;
+    private Text bigNumSeparator;
 
-    public FeCurrency(String identifier, Text displayName, Text pluralDisplayName, Text symbol, boolean rightSideSymbol, int valueScale, TextFormat valueFormat) {
+    public FeCurrency(String identifier, Text displayName, Text pluralDisplayName, Text symbol, boolean rightSideSymbol, int valueScale, TextFormat valueFormat, Text bigNumSeparator) {
 
         this.identifier = identifier;
 
         this.displayName = displayName;
         this.pluralDisplayName = pluralDisplayName;
 
+        this.bigNumSeparator = bigNumSeparator;
+
         this.symbol = symbol;
         this.rightSideSymbol = rightSideSymbol;
 
-        this.valueScale = valueScale;
+        this.valueScale = (valueScale > 0) ? valueScale : 0;
         this.valueFormat = valueFormat;
     }
 
@@ -47,12 +51,13 @@ public class FeCurrency implements Currency {
             return (FeCurrency) c;
 
         return new FeCurrency(c.getId(), c.getDisplayName(), c.getPluralDisplayName(), c.getSymbol(),
-                false, 2, Text.of(TextColors.GRAY, TextStyles.OBFUSCATED).getFormat()); // so evil >:>
+                false, 2, TextFormat.NONE, Text.EMPTY); // so evil >:>
     }
 
     public boolean getRightSideSymbol() { return this.rightSideSymbol; }
     public int getValueScale() { return this.valueScale; }
     public TextFormat getValueFormat() { return this.valueFormat; }
+    public Text getBigNumSeparator() { return this.bigNumSeparator; }
 
     /**
      * The currency's display name, in singular form. Ex: Dollar.
@@ -100,33 +105,7 @@ public class FeCurrency implements Currency {
      */
     @Override
     public Text format(BigDecimal amount) {
-
-        Text.Builder formatted = Text.builder();
-
-        amount = amount.setScale(this.valueScale, RoundingMode.FLOOR);
-
-        Text formattedAmount = Text.of(this.valueFormat, amount);
-
-        if(this.symbol.compareTo(Text.EMPTY) > 0) {
-
-            if(!this.rightSideSymbol) {
-
-                formatted.append(this.symbol);
-                formatted.append(formattedAmount);
-
-            } else {
-
-                formatted.append(formattedAmount);
-                formatted.append(this.symbol);
-            }
-
-        } else {
-
-            formatted.append(formattedAmount, Text.of(" "));
-            formatted.append( ((amount.abs().compareTo(BigDecimal.ONE) == 0) ? this.displayName : this.pluralDisplayName) );
-        }
-
-        return formatted.build();
+        return this.format(amount, this.valueScale);
     }
 
     /**
@@ -144,8 +123,40 @@ public class FeCurrency implements Currency {
         Text.Builder formatted = Text.builder();
 
         amount = amount.setScale(numFractionDigits, RoundingMode.FLOOR);
+        String amountString = amount.toString();
+        int indexOfDecimal = amountString.indexOf('.');
+        indexOfDecimal = (indexOfDecimal < amountString.length() && indexOfDecimal > 0) ? indexOfDecimal : amountString.length();
 
-        Text formattedAmount = Text.of(this.valueFormat, amount);
+        Text.Builder tb = Text.builder();
+
+        List<Integer> placeForSeparator = new ArrayList<>();
+        int count = 0;
+        for(int i = indexOfDecimal-1; i >= 0; i--, count++) {
+            if(count%3 != 0)
+                continue;
+            placeForSeparator.add(i);
+        }
+
+        Collections.reverse(placeForSeparator);
+
+        int begin = 0;
+        for(int i : placeForSeparator) {
+            if(i+1 != indexOfDecimal) {
+                tb.append(Text.of(this.valueFormat, amountString.substring(begin, i+1), TextStyles.RESET, TextColors.RESET, this.bigNumSeparator));
+            } else {
+                tb.append(Text.of(this.valueFormat, amountString.substring(begin, i+1))); // the last chars
+                break;
+            }
+            begin = i + 1;
+        }
+        if(indexOfDecimal < amountString.length()) {
+            tb.append(Text.of(this.bigNumSeparator.getFormat(), '.'));
+            tb.append(Text.of(this.valueFormat, amountString.substring(indexOfDecimal+1)));
+        }
+
+        // add formatting for decimal places, this.bigNumSeparator
+
+        Text formattedAmount = tb.build();
 
         if(this.symbol.compareTo(Text.EMPTY) > 0) {
 

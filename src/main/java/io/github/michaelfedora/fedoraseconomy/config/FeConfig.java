@@ -2,41 +2,36 @@ package io.github.michaelfedora.fedoraseconomy.config;
 
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
-import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
- * Created by Michael on 3/21/2016.
+ * Created by Michael on 3/22/2016.
  */
-public final class Config {
+public class FeConfig implements FeConfigurable {
 
-    private ConfigurationLoader<CommentedConfigurationNode> loader = HoconConfigurationLoader.builder().setPath(FedorasEconomy.getConfigDir().resolve(PluginInfo.DATA_ROOT + ".cfg")).build();
+    private ConfigurationLoader<CommentedConfigurationNode> loader;
     private CommentedConfigurationNode root;
-    private ConfigurationOptions options;
 
-    public Config(ConfigurationOptions options) {
-        this.options = options;
+    public FeConfig() {
+        Path path = FedorasEconomy.getSharedConfigDir().resolve(PluginInfo.DATA_ROOT + ".cfg");
+        this.loader = HoconConfigurationLoader.builder().setPath(path).build();
     }
 
-    public Config() {
-        this.options = null;
-    }
-
+    @Override
     public void load() {
         try {
-            if(options != null)
-                root = loader.load(options);
-            else
-                root = loader.load();
+            root = loader.load();
         } catch(IOException e) {
             FedorasEconomy.getLogger().error("Could not load configuration!", e);
         }
     }
 
+    @Override
     public void save() {
         try {
             loader.save(root);
@@ -45,7 +40,10 @@ public final class Config {
         }
     }
 
+    @Override
     public CommentedConfigurationNode root() { return root; }
 
+    @Override
     public CommentedConfigurationNode getNode(Object... path) { return root.getNode(path); }
+
 }

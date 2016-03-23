@@ -37,7 +37,7 @@ public class FeEconomyTransactionEvent implements EconomyTransactionEvent {
     }
 
     /**
-     * Gets the {@link TransactionResult} for the transaction that occured.
+     * Gets the {@link TransactionResult} for the transaction that occurred.
      *
      * @return The {@link TransactionResult}
      */

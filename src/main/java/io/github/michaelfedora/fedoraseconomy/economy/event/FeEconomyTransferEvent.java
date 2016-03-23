@@ -38,7 +38,7 @@ public class FeEconomyTransferEvent implements EconomyTransactionEvent {
     }
 
     /**
-     * Gets the {@link TransactionResult} for the transaction that occured.
+     * Gets the {@link TransactionResult} for the transaction that occurred.
      *
      * @return The {@link TransactionResult}
      */
@@ -48,7 +48,7 @@ public class FeEconomyTransferEvent implements EconomyTransactionEvent {
     }
 
     /**
-     * Gets the {@link TransferResult} for the transaction that occured.
+     * Gets the {@link TransferResult} for the transaction that occurred.
      *
      * @return The {@link TransferResult}
      */

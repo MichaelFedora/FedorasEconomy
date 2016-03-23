@@ -49,7 +49,7 @@ public class FeHelpExecutor extends FeExecutorBase {
 
     public static void helpFunc(CommandSource src, CommandContext args, HashMap<List<String>,CommandSpec> commands, String parentCmd) throws CommandException {
 
-        Optional<String> opt_cmd = args.<String>getOne("cmd");
+        Optional<String> opt_cmd = args.getOne("cmd");
         if(opt_cmd.isPresent()) {
             Optional<Map.Entry<List<String>, CommandSpec>> opt_cmdspec = findCmd(commands, opt_cmd.get());
             if(opt_cmdspec.isPresent()) {
@@ -79,7 +79,7 @@ public class FeHelpExecutor extends FeExecutorBase {
                 usage = Text.of(": ", TextColors.RED, "[ ]");
             Text commandHelp = Text.builder()
                     .append(Text.builder()
-                            .onHover(TextActions.showText(commandSpec.getShortDescription(src).orElseThrow(() -> new CommandException(Text.of("Could not get PaginationService!")))))
+                            .onHover(TextActions.showText(commandSpec.getShortDescription(src).orElseThrow(() -> new CommandException(Text.of("Could not get ShortDescription!")))))
                             .onClick(TextActions.suggestCommand(prefix + aliases.get(0)))
                             .append(Text.of(TextColors.GREEN, TextStyles.BOLD, aliases.toString()))
                             .build())
@@ -89,12 +89,12 @@ public class FeHelpExecutor extends FeExecutorBase {
         }
 
         PaginationService paginationService = Sponge.getServiceManager().provide(PaginationService.class).orElseThrow(() -> new CommandException(Text.of("Could not get PaginationService!")));
-        Text parentReferece = Text.EMPTY;
+        Text parentReference = Text.EMPTY;
         if(!parentCmd.equals("")) {
-            parentReferece = Text.of(TextColors.WHITE, " [" + parentCmd + "]");
+            parentReference = Text.of(TextColors.WHITE, " [" + parentCmd + "]");
         }
 
-        PaginationList.Builder paginationBuilder = paginationService.builder().title(Text.of(TextColors.AQUA, PluginInfo.NAME, parentReferece, TextColors.AQUA, " Help")).padding(Text.of(TextColors.GOLD, "=")).contents(helpList);
+        PaginationList.Builder paginationBuilder = paginationService.builder().title(Text.of(TextColors.AQUA, PluginInfo.NAME, parentReference, TextColors.AQUA, " Help")).padding(Text.of(TextColors.GOLD, "=")).contents(helpList);
         paginationBuilder.sendTo(src);
     }
 

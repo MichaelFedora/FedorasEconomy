@@ -9,6 +9,7 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
@@ -40,7 +41,7 @@ public class FeListExecutor extends FeExecutorBase {
 
         int count = 0;
         for(Currency c : currencies) {
-            tb.append(c.getDisplayName());
+            tb.append(Text.builder().onHover(TextActions.showText(Text.of(c.getId()))).append(c.getDisplayName()).build());
             if(++count < currencies.size())
                 tb.append(Text.of(", "));
         }

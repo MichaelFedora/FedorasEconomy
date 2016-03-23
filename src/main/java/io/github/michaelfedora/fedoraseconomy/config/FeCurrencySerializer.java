@@ -29,7 +29,8 @@ public class FeCurrencySerializer implements TypeSerializer<FeCurrency> {
         boolean rightSideSymbol = value.getNode("rightSideSymbol").getBoolean();
         int valueScale = value.getNode("valueScale").getInt();
         Text valueFormat = value.getNode("valueFormat").getValue(TypeToken.of(Text.class));
-        return new FeCurrency(identifier, displayName, pluralDisplayName, symbol, rightSideSymbol, valueScale, valueFormat.getFormat());
+        Text bigNumSeparator = value.getNode("bigNumSeparator").getValue(TypeToken.of(Text.class));
+        return new FeCurrency(identifier, displayName, pluralDisplayName, symbol, rightSideSymbol, valueScale, valueFormat.getFormat(), bigNumSeparator);
     }
 
     @Override
@@ -41,5 +42,6 @@ public class FeCurrencySerializer implements TypeSerializer<FeCurrency> {
         value.getNode("rightSideSymbol").setValue(obj.getRightSideSymbol());
         value.getNode("valueScale").setValue(obj.getValueScale());
         value.getNode("valueFormat").setValue(TypeToken.of(Text.class), Text.of(obj.getValueFormat()));
+        value.getNode("bigNumSeparator").setValue(TypeToken.of(Text.class), obj.getBigNumSeparator());
     }
 }

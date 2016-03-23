@@ -9,15 +9,14 @@ package io.github.michaelfedora.fedoraseconomy;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.*;
-import io.github.michaelfedora.fedoraseconomy.config.Config;
+import io.github.michaelfedora.fedoraseconomy.config.CurrencyConfig;
+import io.github.michaelfedora.fedoraseconomy.config.FeConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeCurrencySerializer;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import io.github.michaelfedora.fedoraseconomy.registry.CurrencyRegistry;
 import me.flibio.updatifier.Updatifier;
-import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
@@ -36,6 +35,7 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -56,8 +56,13 @@ public class FedorasEconomy {
 
     @Inject
     @ConfigDir(sharedRoot = true)
-    private Path configDir; //TODO: Implement config
-    public static Path getConfigDir() { return instance.configDir; }
+    private Path sharedConfigDir; //TODO: Implement config
+    public static Path getSharedConfigDir() { return instance.sharedConfigDir; }
+
+    @Inject
+    @ConfigDir(sharedRoot = false)
+    private Path privateConfigDir; //TODO: Implement config
+    public static Path getPrivateConfigDir() { return instance.privateConfigDir; }
 
     private static SqlService SQL;
     public static javax.sql.DataSource getDataSource(String jdbcUrl) throws SQLException {
@@ -93,7 +98,13 @@ public class FedorasEconomy {
         instance = this;
     }
 
-    public static FeCurrency defaultCurrency = new FeCurrency("currency:fedorians", Text.of(TextColors.AQUA, "Fedorian"), Text.of(TextColors.AQUA, "Fedorian", TextColors.DARK_PURPLE, "s"), Text.of(TextColors.AQUA, "f$"), false, 0, Text.of(TextColors.GOLD, TextStyles.NONE).getFormat());
+    public static FeCurrency defaultCurrency = new FeCurrency(
+            "currency:fedorian",
+            Text.of(TextColors.AQUA, "Fedorian"),
+            Text.of(TextColors.AQUA, "Fed", TextColors.DARK_GRAY, TextStyles.OBFUSCATED, "ori", TextColors.AQUA, TextStyles.RESET, "ans"),
+            Text.of(TextColors.AQUA, "f$"), true,
+            3, Text.of(TextColors.DARK_GRAY, TextStyles.NONE).getFormat(),
+            Text.of(TextColors.GRAY, ","));
 
     @Listener
     public void onInit(GameInitializationEvent gie) {
@@ -108,47 +119,74 @@ public class FedorasEconomy {
 
         // config stuff
 
-        /*TypeSerializerCollection serializers = TypeSerializers.getDefaultSerializers().newChild();
-        serializers.registerType(TypeToken.of(FeCurrency.class), new FeCurrencySerializer());
-        ConfigurationOptions options = ConfigurationOptions.defaults().setSerializers(serializers);*/
+        File privateDir = this.privateConfigDir.toFile();
+        if(!privateDir.exists()) {
+            try {
+                privateDir.mkdir();
+            } catch(SecurityException e) {
+                logger.error("Could not make private directory!", e);
+            }
+        }
+
         TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FeCurrency.class), new FeCurrencySerializer());
 
-        Config config = new Config();
-        config.load();
-        if(config.getNode("defaultCurrency").getValue() == null) {
-            try {
-                config.getNode("defaultCurrency").setComment("The default currency").setValue(TypeToken.of(FeCurrency.class), defaultCurrency);
-            } catch (ObjectMappingException e) {
-                logger.error("Could not map defaultCurrency!", e);
-            }
+        String defaultCurrencyId = defaultCurrency.getId().substring(defaultCurrency.getId().indexOf(':')+1);
+
+        FeConfig mainConfig = new FeConfig();
+        mainConfig.load();
+        if(mainConfig.getNode("defaultCurrency").getValue() == null) {
+            mainConfig.getNode("defaultCurrency").setComment("The default currency (in the private-plugin folder)").setValue(defaultCurrencyId);
+        } else {
+            defaultCurrencyId = mainConfig.getNode("defaultCurrency").getString();
         }
-        if(config.getNode("currencies").getValue() == null || !(config.getNode("currencies").getValue() instanceof List))
-            config.getNode("currencies").setValue(Collections.emptyList()).setComment("The list of currencies");
-        /*currencyRegistry.getAll().forEach((c) -> {
+        mainConfig.save();
 
-            FeCurrency fc = (c instanceof FeCurrency) ? (FeCurrency) c : new FeCurrency(c);
-            try {
-                config.getNode("currencies").getAppendedNode().setValue(TypeToken.of(FeCurrency.class), fc);
-            } catch(ObjectMappingException e) {
-                logger.error("Could not map currency " + c.getName() + "!");
+        FeCurrency customDefaultCurrency = null;
+
+        Map<String, CurrencyConfig> currencyConfigs = CurrencyConfig.loadAll();
+        if(currencyConfigs.size() != 0) {
+
+            int count = 0;
+            for(Map.Entry<String, CurrencyConfig> entry : currencyConfigs.entrySet()) {
+
+                entry.getValue().load();
+
+                Optional<FeCurrency> opt_fc = entry.getValue().get();
+
+                if(!opt_fc.isPresent())
+                    return;
+
+                FeCurrency fc = opt_fc.get();
+
+                logger.info("Registered currency [" + fc.getId() + "]!");
+                currencyRegistry.registerAdditionalCatalog(fc);
+
+                if(entry.getKey().equals(defaultCurrencyId)) {
+                    logger.info("Found default currency [" + defaultCurrencyId + "]!");
+                    customDefaultCurrency = fc;
+                }
+
+                if(++count == currencyConfigs.size() && customDefaultCurrency == null) {
+                    logger.warn("Could not find default currency [" + defaultCurrencyId + "](file), setting it to [" + fc.getId() + "](id)!");
+                    customDefaultCurrency = fc; // just set it to one ;3
+                }
             }
-        });*/
-        FeCurrency customDefaultCurrency = defaultCurrency;
-        try {
 
-            customDefaultCurrency = config.getNode("defaultCurrency").getValue(TypeToken.of(FeCurrency.class), defaultCurrency);
-            currencyRegistry.registerAdditionalCatalog(customDefaultCurrency);
+        } else {
 
-            List<FeCurrency> currencies = config.getNode("currencies").getList(TypeToken.of(FeCurrency.class));
-            currencies.forEach(currencyRegistry::registerAdditionalCatalog);
+            logger.info("Could not find anything; using default currency!");
+            currencyRegistry.registerAdditionalCatalog(defaultCurrency);
 
-        } catch(ObjectMappingException e) {
-            logger.error("Could not get currencies!", e);
+            customDefaultCurrency = defaultCurrency;
+            CurrencyConfig defaultConfig = new CurrencyConfig(defaultCurrency.getId().substring(defaultCurrency.getId().indexOf(':')+1));
+            defaultConfig.load();
+            defaultConfig.put(defaultCurrency);
+            defaultConfig.save();
         }
-        config.save();
 
         // register api
         Sponge.getServiceManager().setProvider(this, EconomyService.class, new FeEconomyService(customDefaultCurrency));
+        logger.info("Registered the Economy API!");
 
         registerCommands();
 
@@ -168,10 +206,5 @@ public class FedorasEconomy {
         subCommands.put(FeAddExecutor.ALIASES, FeAddExecutor.create());
 
         commandManager.register(this, FeExecutor.create(subCommands), FeExecutor.ALIASES);
-    }
-
-    @Listener
-    public void onLoadComplete(GameLoadCompleteEvent glce) {
-        // database stuff ..?
     }
 }
