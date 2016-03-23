@@ -15,12 +15,12 @@ import java.util.Set;
  */
 public class FeTransactionResult implements TransactionResult {
 
-    private Account account;
-    private Currency currency;
-    private BigDecimal amount;
-    private Set<Context> contexts;
-    private ResultType result;
-    private TransactionType type;
+    private final Account account;
+    private final Currency currency;
+    private final BigDecimal amount;
+    private final Set<Context> contexts;
+    private final ResultType result;
+    private final TransactionType type;
 
     public FeTransactionResult(Account account, Currency currency, BigDecimal amount, Set<Context> contexts, ResultType result, TransactionType type) {
         this.account = account;

@@ -2,14 +2,12 @@ package io.github.michaelfedora.fedoraseconomy.config;
 
 import com.google.common.reflect.TypeToken;
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
-import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +19,7 @@ import java.util.*;
 public class CurrencyConfig implements FeConfigurable {
 
     private final Path path;
-    private ConfigurationLoader<CommentedConfigurationNode> loader;
+    private final ConfigurationLoader<CommentedConfigurationNode> loader;
     private CommentedConfigurationNode root;
 
     public CurrencyConfig(String name) {
@@ -35,7 +33,7 @@ public class CurrencyConfig implements FeConfigurable {
     }
 
     public static Map<String, CurrencyConfig> loadAll() {
-        Map<String, CurrencyConfig> configs = new HashMap<String, CurrencyConfig>();
+        Map<String, CurrencyConfig> configs = new HashMap<>();
         try {
             Files.walk(FedorasEconomy.getPrivateConfigDir()).forEach((filePath) -> {
                 if(Files.isRegularFile(filePath)) {

@@ -16,7 +16,6 @@ import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import io.github.michaelfedora.fedoraseconomy.registry.CurrencyRegistry;
 import me.flibio.updatifier.Updatifier;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
@@ -25,7 +24,6 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
-import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.economy.Currency;
@@ -88,7 +86,7 @@ public class FedorasEconomy {
     // ex: 101 | 2016-03-21 10:43:50 | null | DEPOSIT | 14.25 | fedorascurrency:coins
     // ex: 102 | 2016-03-21 10:45:29 | {uuid} | TRANSFER | 7 | fedorascurrency:doubloons
 
-    private LinkedHashMap<List<String>, CommandSpec> subCommands = new LinkedHashMap<>();
+    private final LinkedHashMap<List<String>, CommandSpec> subCommands = new LinkedHashMap<>();
     public static LinkedHashMap<List<String>, CommandSpec> getSubCommands() {
         return instance.subCommands;
     }
@@ -98,7 +96,7 @@ public class FedorasEconomy {
         instance = this;
     }
 
-    public static FeCurrency defaultCurrency = new FeCurrency(
+    public static final FeCurrency defaultCurrency = new FeCurrency(
             "currency:fedorian",
             Text.of(TextColors.AQUA, "Fedorian"),
             Text.of(TextColors.AQUA, "Fed", TextColors.DARK_GRAY, TextStyles.OBFUSCATED, "ori", TextColors.AQUA, TextStyles.RESET, "ans"),

@@ -14,7 +14,7 @@ import java.nio.file.Path;
  */
 public class FeConfig implements FeConfigurable {
 
-    private ConfigurationLoader<CommentedConfigurationNode> loader;
+    private final ConfigurationLoader<CommentedConfigurationNode> loader;
     private CommentedConfigurationNode root;
 
     public FeConfig() {

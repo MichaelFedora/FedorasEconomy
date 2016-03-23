@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 public class FeUniqueAccount extends FeAccount implements UniqueAccount {
 
-    private UUID uuid;
+    private final UUID uuid;
 
     public FeUniqueAccount(UUID uuid) {
         super(uuid.toString(), Text.of("UniqueAccount[" + uuid + "]"));

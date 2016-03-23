@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class CurrencyRegistry implements AdditionalCatalogRegistryModule<Currency> {
 
-    private Map<String, Currency> currencyMap = new HashMap<>();
+    private final Map<String, Currency> currencyMap = new HashMap<>();
 
     @Override
     public Optional<Currency> getById(String id) {

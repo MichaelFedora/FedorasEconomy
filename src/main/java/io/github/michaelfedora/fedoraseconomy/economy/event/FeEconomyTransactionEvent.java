@@ -10,8 +10,8 @@ import org.spongepowered.api.service.economy.transaction.TransactionResult;
  */
 public class FeEconomyTransactionEvent implements EconomyTransactionEvent {
 
-    private TransactionResult result;
-    private Cause cause;
+    private final TransactionResult result;
+    private final Cause cause;
 
     public FeEconomyTransactionEvent(TransactionResult result, Cause cause) {
         this.result = result;

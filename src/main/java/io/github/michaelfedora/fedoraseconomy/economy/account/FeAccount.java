@@ -27,8 +27,8 @@ import java.util.*;
  */
 public abstract class FeAccount implements Account {
 
-    private String identifier;
-    private Text displayName;
+    private final String identifier;
+    private final Text displayName;
 
     public FeAccount(String identifier, Text displayName) {
         this.identifier = identifier;

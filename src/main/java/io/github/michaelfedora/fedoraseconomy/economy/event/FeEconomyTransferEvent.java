@@ -11,8 +11,8 @@ import org.spongepowered.api.service.economy.transaction.TransferResult;
  */
 public class FeEconomyTransferEvent implements EconomyTransactionEvent {
 
-    private TransferResult result;
-    private Cause cause;
+    private final TransferResult result;
+    private final Cause cause;
 
     public FeEconomyTransferEvent(TransferResult result, Cause cause) {
         this.result = result;

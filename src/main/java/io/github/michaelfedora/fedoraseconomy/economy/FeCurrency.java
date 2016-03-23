@@ -17,17 +17,17 @@ import java.util.*;
  */
 public class FeCurrency implements Currency {
 
-    private String identifier;
+    private final String identifier;
 
-    private Text displayName;
-    private Text pluralDisplayName;
+    private final Text displayName;
+    private final Text pluralDisplayName;
 
-    private Text symbol;
-    private boolean rightSideSymbol; // default left
+    private final Text symbol;
+    private final boolean rightSideSymbol; // default left
 
-    private int valueScale;
-    private TextFormat valueFormat;
-    private Text bigNumSeparator;
+    private final int valueScale;
+    private final TextFormat valueFormat;
+    private final Text bigNumSeparator;
 
     public FeCurrency(String identifier, Text displayName, Text pluralDisplayName, Text symbol, boolean rightSideSymbol, int valueScale, TextFormat valueFormat, Text bigNumSeparator) {
 

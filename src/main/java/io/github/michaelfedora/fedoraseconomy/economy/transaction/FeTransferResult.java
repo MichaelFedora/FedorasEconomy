@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class FeTransferResult extends FeTransactionResult implements TransferResult {
 
-    private Account accountTo;
+    private final Account accountTo;
 
     public FeTransferResult(Account accountFrom, Account accountTo, Currency currency, BigDecimal amount, Set<Context> contexts, ResultType result) {
         super(accountFrom, currency, amount, contexts, result, TransactionTypes.TRANSFER);
