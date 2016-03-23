@@ -1,6 +1,7 @@
-package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
+package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -18,7 +19,7 @@ import java.util.*;
 /**
  * Created by Michael on 3/19/2016.
  */
-public class FeListExecutor extends FeExecutorBase {
+public class FeCurrencyListExecutor extends FeExecutorBase {
 
     public static final List<String> ALIASES = Arrays.asList("list", "l");
 
@@ -27,8 +28,8 @@ public class FeListExecutor extends FeExecutorBase {
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("List all available currencies"))
-                .permission(PluginInfo.DATA_ROOT + '.' + NAME)
-                .executor(new FeListExecutor())
+                .permission(PluginInfo.DATA_ROOT + ".currency." + NAME)
+                .executor(new FeCurrencyListExecutor())
                 .build();
     }
 

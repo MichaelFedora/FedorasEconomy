@@ -9,6 +9,9 @@ package io.github.michaelfedora.fedoraseconomy;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.*;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.*;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyDetailsExecutor;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyListExecutor;
 import io.github.michaelfedora.fedoraseconomy.config.CurrencyConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeCurrencySerializer;
@@ -57,10 +60,7 @@ public class FedorasEconomy {
     private Path sharedConfigDir; //TODO: Implement config
     public static Path getSharedConfigDir() { return instance.sharedConfigDir; }
 
-    @Inject
-    @ConfigDir(sharedRoot = false)
-    private Path privateConfigDir; //TODO: Implement config
-    public static Path getPrivateConfigDir() { return instance.privateConfigDir; }
+    public static Path getCurrenciesConfigDir() { return instance.sharedConfigDir.resolve("Currencies"); }
 
     private static SqlService SQL;
     public static javax.sql.DataSource getDataSource(String jdbcUrl) throws SQLException {
@@ -91,6 +91,11 @@ public class FedorasEconomy {
         return instance.subCommands;
     }
 
+    private final LinkedHashMap<String, LinkedHashMap<List<String>, CommandSpec>> grandChildCommands = new LinkedHashMap<>();
+    public static Optional<LinkedHashMap<List<String>, CommandSpec>> getGrandChildCommands(String name) {
+        return Optional.ofNullable(instance.grandChildCommands.get(name));
+    }
+
     @Listener
     public void onPreInit(GamePreInitializationEvent gpie) {
         instance = this;
@@ -117,10 +122,10 @@ public class FedorasEconomy {
 
         // config stuff
 
-        File privateDir = this.privateConfigDir.toFile();
-        if(!privateDir.exists()) {
+        File currencyConfigDir = getCurrenciesConfigDir().toFile();
+        if(!currencyConfigDir.exists()) {
             try {
-                privateDir.mkdir();
+                currencyConfigDir.mkdir();
             } catch(SecurityException e) {
                 logger.error("Could not make private directory!", e);
             }
@@ -195,11 +200,12 @@ public class FedorasEconomy {
         CommandManager commandManager = Sponge.getCommandManager();
 
         commandManager.register(this, BalanceExecutor.create(), BalanceExecutor.ALIASES);
+        commandManager.register(this, BalanceExecutor.createAsMoneyAlias(), BalanceExecutor.MONEY_ALIASES);
         commandManager.register(this, PayExecutor.create(), PayExecutor.ALIASES);
 
         subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
-        subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
-        subCommands.put(FeDetailsExecutor.ALIASES, FeDetailsExecutor.create());
+        subCommands.put(FeCurrencyListExecutor.ALIASES, FeCurrencyListExecutor.create());
+        subCommands.put(FeCurrencyDetailsExecutor.ALIASES, FeCurrencyDetailsExecutor.create());
         subCommands.put(FeSetExecutor.ALIASES, FeSetExecutor.create());
         subCommands.put(FeAddExecutor.ALIASES, FeAddExecutor.create());
 

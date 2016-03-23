@@ -23,7 +23,7 @@ public class CurrencyConfig implements FeConfigurable {
     private CommentedConfigurationNode root;
 
     public CurrencyConfig(String name) {
-        this.path = FedorasEconomy.getPrivateConfigDir().resolve(name + ".currency");
+        this.path = FedorasEconomy.getCurrenciesConfigDir().resolve(name + ".currency");
         this.loader = HoconConfigurationLoader.builder().setPath(this.path).build();
     }
 
@@ -35,7 +35,7 @@ public class CurrencyConfig implements FeConfigurable {
     public static Map<String, CurrencyConfig> loadAll() {
         Map<String, CurrencyConfig> configs = new HashMap<>();
         try {
-            Files.walk(FedorasEconomy.getPrivateConfigDir()).forEach((filePath) -> {
+            Files.walk(FedorasEconomy.getCurrenciesConfigDir()).forEach((filePath) -> {
                 if(Files.isRegularFile(filePath)) {
                     String fileName = filePath.getFileName().toString();
                     String ext = fileName.substring(fileName.lastIndexOf('.')+1);

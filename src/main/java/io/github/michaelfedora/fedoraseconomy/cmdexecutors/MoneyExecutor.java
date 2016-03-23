@@ -14,15 +14,15 @@ import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.text.Text;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
- * Created by Michael on 3/19/2016.
+ * Created by Michael on 3/23/2016.
  */
-public class BalanceExecutor extends FeExecutorBase {
-
-    public static final List<String> ALIASES = Arrays.asList("balance", "bal");
-    public static final List<String> MONEY_ALIASES = Collections.singletonList("money");
+public class MoneyExecutor extends FeExecutorBase {
+    public static final List<String> ALIASES = Collections.singletonList("money");
 
     public static final String NAME = ALIASES.get(0);
 
@@ -31,16 +31,6 @@ public class BalanceExecutor extends FeExecutorBase {
                 .description(Text.of("Check your balances"))
                 .extendedDescription(Text.of("Check your balance, or a specific players"))
                 .permission(PluginInfo.DATA_ROOT + '.' + NAME)
-                .arguments(GenericArguments.optional(GenericArguments.user(Text.of("user"))))
-                .executor(new BalanceExecutor())
-                .build();
-    }
-
-    public static CommandSpec createAsMoneyAlias() {
-        return CommandSpec.builder()
-                .description(Text.of("Check your balances"))
-                .extendedDescription(Text.of("Check your balance, or a specific players"))
-                .permission(PluginInfo.DATA_ROOT + ".money")
                 .arguments(GenericArguments.optional(GenericArguments.user(Text.of("user"))))
                 .children(Collections.singletonMap(MoneyPayExecutor.ALIASES, (CommandCallable) new PayExecutor()))
                 .executor(new BalanceExecutor())
