@@ -3,7 +3,6 @@ package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user;
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.FeExecutor;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -45,9 +44,9 @@ public class FeUserGetRawExecutor extends FeExecutorBase {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            ResultSet resultSet = conn.prepareStatement("SELECT * FROM `" + user.getUniqueId() + "`").executeQuery();
+            ResultSet resultSet = conn.prepareStatement("SELECT * FROM `account:" + user.getUniqueId() + "`").executeQuery();
             Text.Builder tb = Text.builder();
-            tb.append(Text.of(TextColors.GOLD, "===== ", TextColors.AQUA, user.getName(), TextColors.GRAY, "'s ", TextColors.GOLD, "Raw Balances", " ====="));
+            tb.append(Text.of(TextColors.GOLD, "===== ", TextColors.AQUA, user.getName(), TextColors.GOLD, "'s Raw Balances", " ====="));
             while(resultSet.next()) {
                 tb.append(Text.of('\n', TextColors.GOLD, '[', TextColors.AQUA, resultSet.getString("currency"), TextColors.GRAY, ": ", TextColors.DARK_GRAY, resultSet.getBigDecimal("balance"), TextColors.GOLD, ']'));
             }

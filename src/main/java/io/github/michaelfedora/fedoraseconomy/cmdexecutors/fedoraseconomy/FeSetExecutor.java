@@ -8,13 +8,10 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.account.Account;
-import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
@@ -56,9 +53,9 @@ public class FeSetExecutor extends FeExecutorBase {
         TransactionResult result = account.setBalance(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if(result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not set account [", accountName, "]'s balance to ", currency.format(amount), ": ", result.getResult()));
+            src.sendMessage(Text.of("Could not set ", account.getDisplayName(), "'s balance to ", currency.format(amount), ": ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Set account [", accountName, "]'s balance to ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Set ", account.getDisplayName(), "'s balance to ", currency.format(amount), "!"));
         }
 
         return CommandResult.success();

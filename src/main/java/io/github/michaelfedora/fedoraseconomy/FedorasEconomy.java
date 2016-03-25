@@ -20,6 +20,7 @@ import io.github.michaelfedora.fedoraseconomy.config.FeConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeCurrencySerializer;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
+import io.github.michaelfedora.fedoraseconomy.listeners.EconomyTransactionListener;
 import io.github.michaelfedora.fedoraseconomy.registry.CurrencyRegistry;
 import me.flibio.updatifier.Updatifier;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
@@ -118,6 +119,7 @@ public class FedorasEconomy {
         getLogger().info("===== " + PluginInfo.NAME + " v" + PluginInfo.VERSION + ": Initializing! =====");
 
         // register listeners - transaction list
+        Sponge.getEventManager().registerListeners(this, new EconomyTransactionListener());
 
         // register registry
         CurrencyRegistry currencyRegistry = new CurrencyRegistry();
@@ -187,8 +189,10 @@ public class FedorasEconomy {
         Sponge.getServiceManager().setProvider(this, EconomyService.class, new FeEconomyService(customDefaultCurrency));
         logger.info("Registered the Economy API!");
 
-        //if(cleanOnStartup)
-            //FeCleanExecutor.cleanAll();
+        if(cleanOnStartup) {
+            FeCleanExecutor.cleanAll();
+            FePurgeExecutor.run();
+        }
 
         registerCommands();
 
@@ -234,13 +238,14 @@ public class FedorasEconomy {
 
         subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
         subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
-        //subCommands.put(FeCleanExecutor.ALIASES, FeCleanExecutor.create());
+        subCommands.put(FeCleanExecutor.ALIASES, FeCleanExecutor.create());
+        subCommands.put(FePurgeExecutor.ALIASES, FePurgeExecutor.create());
         subCommands.put(FeGetExecutor.ALIASES, FeGetExecutor.create());
         subCommands.put(FeGetRawExecutor.ALIASES, FeGetRawExecutor.create());
         subCommands.put(FeSetExecutor.ALIASES, FeSetExecutor.create());
         subCommands.put(FeAddExecutor.ALIASES, FeAddExecutor.create());
         subCommands.put(FePayExecutor.ALIASES, FePayExecutor.create());
-        //subCommands.put(FeTransferExecutor.ALIASES, FeTransferExecutor.create());
+        subCommands.put(FeTransferExecutor.ALIASES, FeTransferExecutor.create());
 
         commandManager.register(this, FeExecutor.create(subCommands), FeExecutor.ALIASES);
     }

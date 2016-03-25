@@ -4,14 +4,12 @@ import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
 import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
-import io.github.michaelfedora.fedoraseconomy.economy.account.FeVirtualAccount;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.service.economy.EconomyService;
-import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.action.TextActions;
@@ -51,9 +49,10 @@ public class FeUserListExecutor extends FeExecutorBase {
 
             ResultSet resultSet = conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES").executeQuery();
             while(resultSet.next()) {
+                final String table_type = resultSet.getString("TABLE_TYPE");
                 final String name = resultSet.getString("TABLE_NAME");
 
-                if(!name.startsWith("account:"))
+                if(!table_type.equals("TABLE") || !name.toLowerCase().startsWith("account:"))
                     continue;
 
                 eco.getOrCreateAccount(name).ifPresent((a) -> FeUniqueAccount.fromAccount(a).ifPresent(uniqueAccounts::add));
@@ -67,9 +66,9 @@ public class FeUserListExecutor extends FeExecutorBase {
 
         int count = 0;
         for(UniqueAccount ua : uniqueAccounts) {
-            tb.append(Text.builder().onHover(TextActions.showText(Text.of(ua.getIdentifier()))).append(ua.getDisplayName()).build());
+            tb.append(Text.builder().onHover(TextActions.showText(Text.of(ua.getIdentifier()))).append(Text.of(TextColors.AQUA, ua.getDisplayName())).build());
             if(++count < uniqueAccounts.size())
-                tb.append(Text.of(", "));
+                tb.append(Text.of(TextColors.GRAY, ", "));
         }
 
         src.sendMessage(tb.build());

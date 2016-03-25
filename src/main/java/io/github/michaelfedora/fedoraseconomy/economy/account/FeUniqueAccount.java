@@ -37,11 +37,11 @@ public class FeUniqueAccount extends FeAccount implements UniqueAccount {
     }
 
     public static Optional<FeUniqueAccount> fromAccount(Account account) {
-        final String identifier = account.getIdentifier();
-        if(!identifier.matches("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"))
+        final String uuid_string = account.getIdentifier().substring("account:".length());
+        if(!uuid_string.matches("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"))
             return Optional.empty();
 
-        return Optional.of(new FeUniqueAccount(UUID.fromString(identifier)));
+        return Optional.of(new FeUniqueAccount(UUID.fromString(uuid_string)));
     }
 
     /**

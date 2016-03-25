@@ -31,6 +31,15 @@ public class FeTransactionResult implements TransactionResult {
         this.type = type;
     }
 
+    public FeTransactionResult(TransactionResult transactionResult) {
+        this.account = transactionResult.getAccount();
+        this.currency = transactionResult.getCurrency();
+        this.amount = transactionResult.getAmount();
+        this.contexts = transactionResult.getContexts();
+        this.result = transactionResult.getResult();
+        this.type = transactionResult.getType();
+    }
+
     /**
      * Gets the {@link Account} involved in the transaction.
      *

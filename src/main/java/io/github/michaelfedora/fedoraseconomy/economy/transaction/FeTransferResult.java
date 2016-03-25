@@ -22,6 +22,11 @@ public class FeTransferResult extends FeTransactionResult implements TransferRes
         this.accountTo = accountTo;
     }
 
+    public FeTransferResult(TransferResult transferResult) {
+        super(transferResult);
+        this.accountTo = transferResult.getAccountTo();
+    }
+
     /**
      * Gets the {@link Account} that an amount of a {@link Currency} is being transferred to.
      * <p>

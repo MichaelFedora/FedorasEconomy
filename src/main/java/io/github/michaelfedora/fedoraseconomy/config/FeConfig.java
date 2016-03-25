@@ -48,17 +48,15 @@ public class FeConfig implements FeConfigurable {
     }
 
     private void setupValues() {
-        if(this.getNode("defaultCurrency") == null)
+        if(this.getNode("defaultCurrency").getValue() == null)
             this.getNode("defaultCurrency").setComment("The default currency (in the private-plugin folder)").setValue(this.defaultCurrency);
         else
             this.defaultCurrency = this.getNode("defaultCurrency").getString();
 
-        if(this.getNode("cleanOnStartup") == null)
-            this.getNode("cleanOnStartup").setComment("Clean bad/unknown currency-references on startup. WARNING: This is irreversible!").setValue(this.cleanOnStartup);
+        if(this.getNode("cleanOnStartup").getValue() == null)
+            this.getNode("cleanOnStartup").setComment("Clean bad/unknown currency-references & purges empty accounts on startup. WARNING: This is irreversible!").setValue(this.cleanOnStartup);
         else
             this.cleanOnStartup = this.getNode("cleanOnStartup").getBoolean();
-
-        this.save();
     }
 
     @Override

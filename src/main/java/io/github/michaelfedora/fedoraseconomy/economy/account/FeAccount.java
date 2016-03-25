@@ -30,7 +30,11 @@ public abstract class FeAccount implements Account {
     private final String identifier;
     private final Text displayName;
 
-    public FeAccount(String identifier, Text displayName) {
+    FeAccount(String identifier, Text displayName) {
+
+        if(!identifier.toLowerCase().startsWith("account:"))
+            identifier = "account:" + identifier;
+
         this.identifier = identifier;
         this.displayName = displayName;
     }
@@ -215,6 +219,7 @@ public abstract class FeAccount implements Account {
 
         amount = amount.setScale(currency.getDefaultFractionDigits(), RoundingMode.FLOOR);
         BigDecimal old_bal = BigDecimal.ZERO;
+        BigDecimal diff = BigDecimal.ZERO;
         TransactionType trans_type = TransactionTypes.TRANSFER;
         int update = 0;
 
@@ -234,6 +239,7 @@ public abstract class FeAccount implements Account {
                 } else if(amount.compareTo(old_bal) < 0) {
 
                     trans_type = TransactionTypes.WITHDRAW;
+
                 } // else if equal, it will stay the same (TransactionTypes.TRANSFER)
 
                 statement = conn.prepareStatement("INSERT INTO `" + this.identifier + "`(currency, balance) values (?, ?)");
@@ -246,6 +252,8 @@ public abstract class FeAccount implements Account {
 
                 old_bal = resultSet.getBigDecimal("balance");
 
+                diff = amount.subtract(old_bal).abs();
+
                 if(amount.compareTo(old_bal) > 0) {
 
                     trans_type = TransactionTypes.DEPOSIT;
@@ -253,6 +261,7 @@ public abstract class FeAccount implements Account {
                 } else if(amount.compareTo(old_bal) < 0) {
 
                     trans_type = TransactionTypes.WITHDRAW;
+
                 } // else if equal, it will stay the same (TransactionTypes.TRANSFER)
 
                 statement = conn.prepareStatement("UPDATE `" + this.identifier + "` SET balance=? WHERE currency=?");
@@ -262,12 +271,12 @@ public abstract class FeAccount implements Account {
                 update = statement.executeUpdate();
             }
 
-            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, trans_type);
+            result = new FeTransactionResult(this, currency, diff, contexts, ResultType.SUCCESS, trans_type);
 
         } catch(SQLException e) {
             FedorasEconomy.getLogger().error("SQL Error", e);
 
-            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, trans_type);
+            result = new FeTransactionResult(this, currency, diff, contexts, ResultType.FAILED, trans_type);
         }
 
         // Do something with `update`?
@@ -524,6 +533,7 @@ public abstract class FeAccount implements Account {
         }
 
         result = to.deposit(currency, amount, cause, contexts);
+
         if(result.getResult() != ResultType.SUCCESS) {
 
             this.deposit(currency, amount, cause, contexts);

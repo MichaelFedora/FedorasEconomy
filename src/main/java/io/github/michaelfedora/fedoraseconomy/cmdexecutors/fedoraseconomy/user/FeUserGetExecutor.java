@@ -46,7 +46,7 @@ public class FeUserGetExecutor extends FeExecutorBase {
 
         int count = 0;
 
-        Text.Builder tb = Text.builder().append(Text.of(TextColors.AQUA, TextStyles.BOLD, uniqueAccount.getDisplayName(), TextColors.GRAY, "'s ", TextColors.GOLD, "Balances: "));
+        Text.Builder tb = Text.builder().append(Text.of(TextColors.AQUA, user.getName(), TextColors.GOLD, "'s Balances: "));
         for(Map.Entry<Currency, BigDecimal> entry : balances.entrySet()) {
             tb.append(entry.getKey().format(entry.getValue()));
             if(++count < balances.size())

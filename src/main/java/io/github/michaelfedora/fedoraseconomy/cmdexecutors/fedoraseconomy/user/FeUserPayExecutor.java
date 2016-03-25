@@ -16,6 +16,7 @@ import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransferResult;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -46,7 +47,7 @@ public class FeUserPayExecutor extends FeExecutorBase {
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
         User userFrom = args.<User>getOne("userFrom").orElseThrow(() -> new CommandException(Text.of("Bad param [userFrom]!")));
-        User userTo = args.<User>getOne("accountTo").orElseThrow(() -> new CommandException(Text.of("Bad param [accountTo]!")));
+        User userTo = args.<User>getOne("userTo").orElseThrow(() -> new CommandException(Text.of("Bad param [userTo]!")));
 
         BigDecimal amount = BigDecimal.valueOf(args.<Double>getOne("amount").orElseThrow(() -> new CommandException(Text.of("Bad param [amount]!"))));
 
@@ -58,9 +59,9 @@ public class FeUserPayExecutor extends FeExecutorBase {
         TransferResult result = myAccount.transfer(theirAccount, currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if (result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not pay ", userTo.getName(), " ", currency.format(amount), ": ", result.getResult()));
+            src.sendMessage(Text.of("Could not pay ", TextColors.AQUA, userTo.getName(), TextColors.RESET, " ", currency.format(amount), ": ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Payed ", userTo.getName(), " ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Payed ", TextColors.AQUA, userTo.getName(), TextColors.RESET, " ", currency.format(amount), "!"));
         }
 
         return CommandResult.success();

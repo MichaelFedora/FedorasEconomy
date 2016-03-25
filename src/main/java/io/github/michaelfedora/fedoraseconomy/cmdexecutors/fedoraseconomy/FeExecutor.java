@@ -41,7 +41,7 @@ public class FeExecutor extends FeExecutorBase {
         String prefix = "/fe " + ((!parentCmd.equals("")) ? parentCmd + " " : "");
         for(Map.Entry<List<String>, CommandSpec> entry : subCommands.entrySet()) {
             tb.append(Text.builder()
-                    .onHover(TextActions.showText(entry.getValue().getShortDescription(src).get()))
+                    .onHover(TextActions.showText(entry.getValue().getShortDescription(src).orElse(Text.EMPTY)))
                     .onClick(TextActions.suggestCommand(prefix + entry.getKey().get(0)))
                     .append(Text.of(TextColors.BLUE, entry.getKey()))
                     .build());

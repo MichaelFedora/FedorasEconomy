@@ -3,8 +3,6 @@ package io.github.michaelfedora.fedoraseconomy.economy.account;
 import org.spongepowered.api.service.economy.account.VirtualAccount;
 import org.spongepowered.api.text.Text;
 
-import java.util.Optional;
-
 /**
  * Created by Michael on 3/18/2016.
  */

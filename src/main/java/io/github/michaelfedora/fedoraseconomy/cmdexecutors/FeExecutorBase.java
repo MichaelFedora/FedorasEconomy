@@ -1,11 +1,9 @@
 package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
 
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
-import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.spec.CommandExecutor;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
@@ -47,7 +45,7 @@ public abstract class FeExecutorBase implements CommandExecutor {
         }
     }
 
-    protected void throwSqlException(SQLException e) throws CommandException {
+    protected static void throwSqlException(SQLException e) throws CommandException {
         FedorasEconomy.getLogger().error("SQL Error", e);
         throw new CommandException(Text.of("SQL Error"), e);
     }

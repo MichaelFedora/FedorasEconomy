@@ -16,6 +16,7 @@ import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -59,9 +60,9 @@ public class FeUserAddExecutor extends FeExecutorBase {
             result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if(result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not add ", currency.format(amount), " to ", user.getName(), "'s account: ", result.getResult()));
+            src.sendMessage(Text.of("Could not add ", currency.format(amount), " to ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s account: ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Added ", currency.format(amount), " to ", user.getName(), "'s account!"));
+            src.sendMessage(Text.of("Added ", currency.format(amount), " to ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s account!"));
         }
 
         return CommandResult.success();

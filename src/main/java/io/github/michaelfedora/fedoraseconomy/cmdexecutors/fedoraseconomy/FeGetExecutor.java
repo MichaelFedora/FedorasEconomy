@@ -8,10 +8,8 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.account.Account;
-import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
@@ -50,7 +48,7 @@ public class FeGetExecutor extends FeExecutorBase {
 
         int count = 0;
 
-        Text.Builder tb = Text.builder().append(Text.of(TextColors.AQUA, TextStyles.BOLD, account.getDisplayName(), TextColors.GRAY, "'s ", TextColors.GOLD, "Balances: "));
+        Text.Builder tb = Text.builder().append(Text.of(TextColors.AQUA, account.getDisplayName(), TextColors.GOLD, "'s Balances: "));
         for(Map.Entry<Currency, BigDecimal> entry : balances.entrySet()) {
             tb.append(entry.getKey().format(entry.getValue()));
             if(++count < balances.size())

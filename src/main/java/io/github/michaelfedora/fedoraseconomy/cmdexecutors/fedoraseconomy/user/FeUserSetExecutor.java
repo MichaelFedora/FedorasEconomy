@@ -16,6 +16,7 @@ import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -55,9 +56,9 @@ public class FeUserSetExecutor extends FeExecutorBase {
         TransactionResult result = account.setBalance(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if(result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not set account [", user.getName(), "]'s balance to ", currency.format(amount), ": ", result.getResult()));
+            src.sendMessage(Text.of("Could not set ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s balance to ", currency.format(amount), ": ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Set account [", user.getName(), "]'s balance to ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Set ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s balance to ", currency.format(amount), "!"));
         }
 
         return CommandResult.success();

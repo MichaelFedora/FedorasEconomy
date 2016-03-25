@@ -48,12 +48,12 @@ public class FeListExecutor extends FeExecutorBase {
 
             ResultSet resultSet = conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES").executeQuery();
             while(resultSet.next()) {
+                final String table_type = resultSet.getString("TABLE_TYPE");
                 final String name = resultSet.getString("TABLE_NAME");
 
-                if(!name.startsWith("account:"))
+                if(!table_type.equals("TABLE") || !name.toLowerCase().startsWith("account:"))
                     continue;
 
-                FedorasEconomy.getLogger().info(name);
                 eco.getOrCreateAccount(name).ifPresent(accounts::add);
             }
 
@@ -65,9 +65,9 @@ public class FeListExecutor extends FeExecutorBase {
 
         int count = 0;
         for(Account a : accounts) {
-            tb.append(Text.builder().onHover(TextActions.showText(Text.of(a.getIdentifier()))).append(a.getDisplayName()).build());
+            tb.append(Text.builder().onHover(TextActions.showText(Text.of(a.getIdentifier()))).append(Text.of(TextColors.AQUA, a.getDisplayName())).build());
             if(++count < accounts.size())
-                tb.append(Text.of(", "));
+                tb.append(Text.of(TextColors.GRAY, ", "));
         }
 
         src.sendMessage(tb.build());

@@ -43,9 +43,9 @@ public class FeGetRawExecutor  extends FeExecutorBase {
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
-            ResultSet resultSet = conn.prepareStatement("SELECT * FROM `" + accountName + "`").executeQuery();
+            ResultSet resultSet = conn.prepareStatement("SELECT * FROM `account:" + accountName + "`").executeQuery();
             Text.Builder tb = Text.builder();
-            tb.append(Text.of(TextColors.GOLD, "===== ", TextColors.AQUA, "Account[", accountName, ']', TextColors.GRAY, "'s ", TextColors.GOLD, "Raw Balances", " ====="));
+            tb.append(Text.of(TextColors.GOLD, "===== ", TextColors.AQUA, "Account[", accountName, ']', TextColors.GOLD, "'s Raw Balances", " ====="));
             while(resultSet.next()) {
                 tb.append(Text.of('\n', TextColors.GOLD, '[', TextColors.AQUA, resultSet.getString("currency"), TextColors.GRAY, ": ", TextColors.DARK_GRAY, resultSet.getBigDecimal("balance"), TextColors.GOLD, ']'));
             }

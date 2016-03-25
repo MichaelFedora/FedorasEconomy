@@ -58,9 +58,9 @@ public class FeUserTransferExecutor extends FeExecutorBase {
         TransferResult result = myAccount.transfer(theirAccount, currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if (result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not pay ", accountTo, " ", currency.format(amount), ": ", result.getResult()));
+            src.sendMessage(Text.of("Could not transfer ", currency.format(amount), " to ", theirAccount.getDisplayName(), ": ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Payed ", accountTo, " ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Transferred ", currency.format(amount), " to ", theirAccount.getDisplayName(), "!"));
         }
 
         return CommandResult.success();

@@ -145,6 +145,8 @@ public class FeEconomyService implements EconomyService {
     public Optional<Account> getOrCreateAccount(String identifier) {
 
         identifier = identifier.toLowerCase();
+        if(!identifier.startsWith("account:"))
+            identifier = "account:" + identifier;
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
