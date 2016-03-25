@@ -144,6 +144,8 @@ public class FeEconomyService implements EconomyService {
     @Override
     public Optional<Account> getOrCreateAccount(String identifier) {
 
+        identifier = identifier.toLowerCase();
+
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {
 
             int update = conn.prepareStatement("CREATE TABLE IF NOT EXISTS `" + identifier + "`(currency VARCHAR(255), balance DECIMAL)").executeUpdate();

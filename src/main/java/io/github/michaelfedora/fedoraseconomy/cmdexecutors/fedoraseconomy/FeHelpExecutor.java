@@ -1,8 +1,9 @@
-package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
+package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy;
 
 import com.google.common.collect.Lists;
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;

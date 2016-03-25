@@ -1,6 +1,7 @@
-package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
+package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * Created by Michael on 3/21/2016.
  */
-public class FeDetailsExecutor extends FeExecutorBase {
+public class FeCurrencyDetailsExecutor extends FeExecutorBase {
 
     public static final List<String> ALIASES = Arrays.asList("details", "cat");
 
@@ -28,9 +29,9 @@ public class FeDetailsExecutor extends FeExecutorBase {
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Shows the details of a particular currency"))
-                .permission(PluginInfo.DATA_ROOT + '.' + NAME)
+                .permission(PluginInfo.DATA_ROOT + ".currency." + NAME)
                 .arguments(GenericArguments.catalogedElement(Text.of("currency"), Currency.class))
-                .executor(new FeDetailsExecutor())
+                .executor(new FeCurrencyDetailsExecutor())
                 .build();
     }
 
@@ -41,7 +42,7 @@ public class FeDetailsExecutor extends FeExecutorBase {
 
         Text.Builder tb = Text.builder();
 
-        tb.append(Text.of(TextColors.GOLD, "===== ", "Currency \"", TextColors.AQUA, currency.getName(), TextColors.GOLD, "\" details! ", "=====", '\n'));
+        tb.append(Text.of(TextColors.GOLD, "===== ", "Currency \"", TextColors.AQUA, currency.getName(), TextColors.GOLD, "\" Details", " =====", '\n'));
         tb.append(Text.of(TextColors.GRAY, "Identifier", TextColors.RESET,": ", currency.getId(), '\n'));
         tb.append(Text.of(TextColors.GRAY, "DisplayName: ", TextColors.RESET, currency.getDisplayName(), '\n'));
         tb.append(Text.of(TextColors.GRAY, "PluralDisplayName: ", TextColors.RESET, currency.getPluralDisplayName(), '\n'));

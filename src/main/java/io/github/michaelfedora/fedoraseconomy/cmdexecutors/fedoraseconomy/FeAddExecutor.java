@@ -1,6 +1,7 @@
-package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
+package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -18,56 +19,51 @@ import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Michael on 3/19/2016.
  */
-public class FeSetExecutor extends FeExecutorBase {
+public class FeAddExecutor extends FeExecutorBase {
 
-    public static final List<String> ALIASES = Collections.singletonList("set");
+    public static final List<String> ALIASES = Collections.singletonList("add");
 
     public static final String NAME = ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Set yours or another's balance"))
+                .description(Text.of("Add an amount to an account"))
                 .permission(PluginInfo.DATA_ROOT + '.' + NAME)
-                .arguments(GenericArguments.doubleNum(Text.of("amount")),
-                        GenericArguments.catalogedElement(Text.of("currency"), Currency.class),
-                        GenericArguments.optional(GenericArguments.user(Text.of("user"))))
-                .executor(new FeSetExecutor())
+                .arguments(GenericArguments.string(Text.of("accountName")),
+                        GenericArguments.doubleNum(Text.of("amount")),
+                        GenericArguments.catalogedElement(Text.of("currency"), Currency.class))
+                .executor(new FeAddExecutor())
                 .build();
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        User user;
+        String accountName = args.<String>getOne("accountName").orElseThrow(() -> new CommandException(Text.of("Bad param [accountName]!")));
 
-        Optional<User> opt_user = args.getOne("user");
-        if(!opt_user.isPresent())
-            if(src instanceof Player)
-                user = (User) src;
-            else
-                throw new CommandException(Text.of("Bad param [user]!"));
-        else
-            user = opt_user.get();
-
-
-
-        Account account = tryGetAccount(user);
+        Account account = tryGetAccount(accountName);
 
         BigDecimal amount = BigDecimal.valueOf(args.<Double>getOne("amount").orElseThrow(() -> new CommandException(Text.of("Bad param [amount]!"))));
 
         Currency currency = args.<Currency>getOne("currency").orElseThrow(() -> new CommandException(Text.of("Bad param [currency]!")));
 
-        TransactionResult result = account.setBalance(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
+        TransactionResult result;
+        if(amount.compareTo(BigDecimal.ZERO) < 0)
+            result = account.withdraw(currency, amount.abs(), Cause.of(NamedCause.of(src.getName(), src)));
+        else
+            result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if(result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Set ", user.getName(), "'s balance to ", currency.format(amount), ": ", result.getResult()));
+            src.sendMessage(Text.of("Could not add ", currency.format(amount), " to ", accountName, "'s account: ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Set ", user.getName(), "'s balance to ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Added ", currency.format(amount), " to ", accountName, "'s account!"));
         }
 
         return CommandResult.success();

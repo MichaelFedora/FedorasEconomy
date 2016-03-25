@@ -9,6 +9,12 @@ package io.github.michaelfedora.fedoraseconomy;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.*;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.*;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyDetailsExecutor;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyExecutor;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyHelpExecutor;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyListExecutor;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user.*;
 import io.github.michaelfedora.fedoraseconomy.config.CurrencyConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeCurrencySerializer;
@@ -54,13 +60,10 @@ public class FedorasEconomy {
 
     @Inject
     @ConfigDir(sharedRoot = true)
-    private Path sharedConfigDir; //TODO: Implement config
+    private Path sharedConfigDir;
     public static Path getSharedConfigDir() { return instance.sharedConfigDir; }
 
-    @Inject
-    @ConfigDir(sharedRoot = false)
-    private Path privateConfigDir; //TODO: Implement config
-    public static Path getPrivateConfigDir() { return instance.privateConfigDir; }
+    public static Path getCurrenciesConfigDir() { return instance.sharedConfigDir.resolve("currencies"); }
 
     private static SqlService SQL;
     public static javax.sql.DataSource getDataSource(String jdbcUrl) throws SQLException {
@@ -91,6 +94,11 @@ public class FedorasEconomy {
         return instance.subCommands;
     }
 
+    private final LinkedHashMap<String, LinkedHashMap<List<String>, CommandSpec>> grandChildCommands = new LinkedHashMap<>();
+    public static Optional<LinkedHashMap<List<String>, CommandSpec>> getGrandChildCommands(String name) {
+        return Optional.ofNullable(instance.grandChildCommands.get(name));
+    }
+
     @Listener
     public void onPreInit(GamePreInitializationEvent gpie) {
         instance = this;
@@ -117,10 +125,10 @@ public class FedorasEconomy {
 
         // config stuff
 
-        File privateDir = this.privateConfigDir.toFile();
-        if(!privateDir.exists()) {
+        File currencyConfigDir = getCurrenciesConfigDir().toFile();
+        if(!currencyConfigDir.exists()) {
             try {
-                privateDir.mkdir();
+                currencyConfigDir.mkdir();
             } catch(SecurityException e) {
                 logger.error("Could not make private directory!", e);
             }
@@ -128,16 +136,9 @@ public class FedorasEconomy {
 
         TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FeCurrency.class), new FeCurrencySerializer());
 
-        String defaultCurrencyId = defaultCurrency.getId().substring(defaultCurrency.getId().indexOf(':')+1);
-
-        FeConfig mainConfig = new FeConfig();
-        mainConfig.load();
-        if(mainConfig.getNode("defaultCurrency").getValue() == null) {
-            mainConfig.getNode("defaultCurrency").setComment("The default currency (in the private-plugin folder)").setValue(defaultCurrencyId);
-        } else {
-            defaultCurrencyId = mainConfig.getNode("defaultCurrency").getString();
-        }
-        mainConfig.save();
+        FeConfig mainConfig = new FeConfig(defaultCurrency.getId().substring(defaultCurrency.getId().indexOf(':') + 1), false);
+        String defaultCurrencyId = mainConfig.getDefaultCurrency();
+        boolean cleanOnStartup = mainConfig.getCleanOnStartup();
 
         FeCurrency customDefaultCurrency = null;
 
@@ -186,6 +187,9 @@ public class FedorasEconomy {
         Sponge.getServiceManager().setProvider(this, EconomyService.class, new FeEconomyService(customDefaultCurrency));
         logger.info("Registered the Economy API!");
 
+        //if(cleanOnStartup)
+            //FeCleanExecutor.cleanAll();
+
         registerCommands();
 
         getLogger().info("===== " + PluginInfo.NAME + " v" + PluginInfo.VERSION + ": Done! =====");
@@ -196,12 +200,47 @@ public class FedorasEconomy {
 
         commandManager.register(this, BalanceExecutor.create(), BalanceExecutor.ALIASES);
         commandManager.register(this, PayExecutor.create(), PayExecutor.ALIASES);
+        commandManager.register(this, BalanceExecutor.createAsMoneyAlias(), BalanceExecutor.MONEY_ALIASES);
+
+        LinkedHashMap<List<String>, CommandSpec> currencyCommands = new LinkedHashMap<>();
+
+        currencyCommands.put(FeCurrencyHelpExecutor.ALIASES, FeCurrencyHelpExecutor.create());
+        currencyCommands.put(FeCurrencyListExecutor.ALIASES, FeCurrencyListExecutor.create());
+        currencyCommands.put(FeCurrencyDetailsExecutor.ALIASES, FeCurrencyDetailsExecutor.create());
+
+        subCommands.put(FeCurrencyExecutor.ALIASES, FeCurrencyExecutor.create(currencyCommands));
+
+        grandChildCommands.put(FeCurrencyExecutor.NAME, currencyCommands);
+
+        // === ===
+
+        LinkedHashMap<List<String>, CommandSpec> userCommands = new LinkedHashMap<>();
+
+        userCommands.put(FeUserHelpExecutor.ALIASES, FeUserHelpExecutor.create());
+        userCommands.put(FeUserListExecutor.ALIASES, FeUserListExecutor.create());
+        userCommands.put(FeUserCleanExecutor.ALIASES, FeUserCleanExecutor.create());
+        userCommands.put(FeUserGetExecutor.ALIASES, FeUserGetExecutor.create());
+        userCommands.put(FeUserGetRawExecutor.ALIASES, FeUserGetRawExecutor.create());
+        userCommands.put(FeUserSetExecutor.ALIASES, FeUserSetExecutor.create());
+        userCommands.put(FeUserAddExecutor.ALIASES, FeUserAddExecutor.create());
+        userCommands.put(FeUserPayExecutor.ALIASES, FeUserPayExecutor.create());
+        userCommands.put(FeUserTransferExecutor.ALIASES, FeUserTransferExecutor.create());
+
+        subCommands.put(FeUserExecutor.ALIASES, FeUserExecutor.create(userCommands));
+
+        grandChildCommands.put(FeUserExecutor.NAME, userCommands);
+
+        // === ===
 
         subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
         subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
-        subCommands.put(FeDetailsExecutor.ALIASES, FeDetailsExecutor.create());
+        //subCommands.put(FeCleanExecutor.ALIASES, FeCleanExecutor.create());
+        subCommands.put(FeGetExecutor.ALIASES, FeGetExecutor.create());
+        subCommands.put(FeGetRawExecutor.ALIASES, FeGetRawExecutor.create());
         subCommands.put(FeSetExecutor.ALIASES, FeSetExecutor.create());
         subCommands.put(FeAddExecutor.ALIASES, FeAddExecutor.create());
+        subCommands.put(FePayExecutor.ALIASES, FePayExecutor.create());
+        //subCommands.put(FeTransferExecutor.ALIASES, FeTransferExecutor.create());
 
         commandManager.register(this, FeExecutor.create(subCommands), FeExecutor.ALIASES);
     }
