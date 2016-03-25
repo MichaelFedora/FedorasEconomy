@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.unique;
+package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user;
 
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Created by Michael on 3/23/2016.
  */
-public class FeUniqueHelpExecutor extends FeExecutorBase {
+public class FeUserHelpExecutor extends FeExecutorBase {
 
     public static final List<String> ALIASES = Arrays.asList("help", "?");
 
@@ -28,16 +28,16 @@ public class FeUniqueHelpExecutor extends FeExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Displays the subCommands and their usages"))
                 .description(Text.of("Displays the subCommands and their usages, or the help for the command specified"))
-                .permission(PluginInfo.DATA_ROOT + ".unique." + NAME)
+                .permission(PluginInfo.DATA_ROOT + ".user." + NAME)
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
-                .executor(new FeHelpExecutor())
+                .executor(new FeUserHelpExecutor())
                 .build();
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        String name = FeUniqueExecutor.NAME;
+        final String name = FeUserExecutor.NAME;
         FeHelpExecutor.helpFunc(src, args, FedorasEconomy.getGrandChildCommands(name).orElseThrow(() -> new CommandException(Text.of("Could not get [" + name + "]'s sub commands!"))), name);
 
         return CommandResult.success();

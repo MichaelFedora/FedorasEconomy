@@ -42,7 +42,7 @@ public class FeCurrencyDetailsExecutor extends FeExecutorBase {
 
         Text.Builder tb = Text.builder();
 
-        tb.append(Text.of(TextColors.GOLD, "===== ", "Currency \"", TextColors.AQUA, currency.getName(), TextColors.GOLD, "\" details! ", "=====", '\n'));
+        tb.append(Text.of(TextColors.GOLD, "===== ", "Currency \"", TextColors.AQUA, currency.getName(), TextColors.GOLD, "\" Details", " =====", '\n'));
         tb.append(Text.of(TextColors.GRAY, "Identifier", TextColors.RESET,": ", currency.getId(), '\n'));
         tb.append(Text.of(TextColors.GRAY, "DisplayName: ", TextColors.RESET, currency.getDisplayName(), '\n'));
         tb.append(Text.of(TextColors.GRAY, "PluralDisplayName: ", TextColors.RESET, currency.getPluralDisplayName(), '\n'));

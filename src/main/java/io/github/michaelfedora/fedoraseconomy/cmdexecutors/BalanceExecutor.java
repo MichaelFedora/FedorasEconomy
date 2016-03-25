@@ -1,8 +1,6 @@
 package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.unique.FeUniqueGetExecutor;
-import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -13,7 +11,10 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextStyles;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -40,9 +41,9 @@ public class BalanceExecutor extends FeExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Check your balances"))
                 .extendedDescription(Text.of("Check your balance, or a specific players"))
-                .permission(PluginInfo.DATA_ROOT + ".money")
+                .permission(PluginInfo.DATA_ROOT + '.' + NAME)
                 .arguments(GenericArguments.optional(GenericArguments.user(Text.of("user"))))
-                .children(Collections.singletonMap(MoneyPayExecutor.ALIASES, (CommandCallable) new PayExecutor()))
+                .children(Collections.singletonMap(PayExecutor.ALIASES, PayExecutor.create()))
                 .executor(new BalanceExecutor())
                 .build();
     }
@@ -50,18 +51,37 @@ public class BalanceExecutor extends FeExecutorBase {
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        Optional<User> user = args.getOne("user");
-        if(!user.isPresent())
-            if(src instanceof Player)
-                user = Optional.of((User) src);
+        boolean me = false;
 
-        if(!user.isPresent())
+        Optional<User> opt_user = args.getOne("user");
+        if(!opt_user.isPresent()) {
+            if (src instanceof Player) {
+                opt_user = Optional.of((User) src);
+                me = true;
+            }
+        }
+
+        if(!opt_user.isPresent())
             throw new CommandException(Text.of("Bad param [user]!"));
 
+        User user = opt_user.get();
 
-        UniqueAccount account = tryGetUniqueAccount(user.get().getUniqueId());
+        UniqueAccount uniqueAccount = tryGetUniqueAccount(user.getUniqueId());
 
-        FeUniqueGetExecutor.run(src, account);
+        Map<org.spongepowered.api.service.economy.Currency, BigDecimal> balances = uniqueAccount.getBalances();
+
+        Text prefix = (!me) ? Text.of(TextStyles.BOLD, TextColors.AQUA, user.getName(), TextColors.GRAY, "'s ") : Text.EMPTY;
+
+        int count = 0;
+
+        Text.Builder tb = Text.builder().append(prefix).append(Text.of(TextStyles.BOLD, TextColors.GOLD, "Balances: "));
+        for(Map.Entry<org.spongepowered.api.service.economy.Currency, BigDecimal> entry : balances.entrySet()) {
+            tb.append(entry.getKey().format(entry.getValue()));
+            if(++count < balances.size())
+                tb.append(Text.of(", "));
+        }
+
+        src.sendMessage(tb.build());
 
         return CommandResult.success();
     }

@@ -28,9 +28,9 @@ public class FeCurrencyHelpExecutor extends FeExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Displays the subCommands and their usages"))
                 .description(Text.of("Displays the subCommands and their usages, or the help for the command specified"))
-                .permission(PluginInfo.DATA_ROOT + ".unique." + NAME)
+                .permission(PluginInfo.DATA_ROOT + ".currency." + NAME)
                 .arguments(GenericArguments.optional(GenericArguments.string(Text.of("cmd"))))
-                .executor(new FeHelpExecutor())
+                .executor(new FeCurrencyHelpExecutor())
                 .build();
     }
 

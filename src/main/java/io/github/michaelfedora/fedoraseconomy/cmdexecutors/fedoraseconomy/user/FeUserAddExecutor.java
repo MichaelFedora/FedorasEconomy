@@ -1,4 +1,4 @@
-package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.unique;
+package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
@@ -12,10 +12,9 @@ import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.service.economy.Currency;
-import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
-import org.spongepowered.api.service.economy.transaction.TransferResult;
+import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
 
 import java.math.BigDecimal;
@@ -25,43 +24,44 @@ import java.util.List;
 /**
  * Created by Michael on 3/23/2016.
  */
-public class FeUniquePayExecutor extends FeExecutorBase {
+public class FeUserAddExecutor extends FeExecutorBase {
 
-    public static final List<String> ALIASES = Collections.singletonList("pay");
+    public static final List<String> ALIASES = Collections.singletonList("add");
 
     public static final String NAME = ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Transfer an amount from an UniqueAccount to another UniqueAccount"))
-                .permission(PluginInfo.DATA_ROOT + ".unique." + NAME)
-                .arguments(GenericArguments.user(Text.of("userFrom")),
-                        GenericArguments.user(Text.of("userTo")),
+                .description(Text.of("Add to an user account's balance"))
+                .permission(PluginInfo.DATA_ROOT + ".user." + NAME)
+                .arguments(GenericArguments.user(Text.of("user")),
                         GenericArguments.doubleNum(Text.of("amount")),
                         GenericArguments.catalogedElement(Text.of("currency"), Currency.class))
-                .executor(new FeUniquePayExecutor())
+                .executor(new FeUserAddExecutor())
                 .build();
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
-        User userFrom = args.<User>getOne("userFrom").orElseThrow(() -> new CommandException(Text.of("Bad param [userFrom]!")));
-        User userTo = args.<User>getOne("accountTo").orElseThrow(() -> new CommandException(Text.of("Bad param [accountTo]!")));
+        User user = args.<User>getOne("user").orElseThrow(() -> new CommandException(Text.of("Bad param [user]!")));
+
+        UniqueAccount account = tryGetUniqueAccount(user.getUniqueId());
 
         BigDecimal amount = BigDecimal.valueOf(args.<Double>getOne("amount").orElseThrow(() -> new CommandException(Text.of("Bad param [amount]!"))));
 
         Currency currency = args.<Currency>getOne("currency").orElseThrow(() -> new CommandException(Text.of("Bad param [currency]!")));
 
-        UniqueAccount myAccount = tryGetUniqueAccount(userFrom.getUniqueId());
-        UniqueAccount theirAccount = tryGetUniqueAccount(userTo.getUniqueId());
+        TransactionResult result;
+        if(amount.compareTo(BigDecimal.ZERO) < 0)
+            result = account.withdraw(currency, amount.abs(), Cause.of(NamedCause.of(src.getName(), src)));
+        else
+            result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
-        TransferResult result = myAccount.transfer(theirAccount, currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
-
-        if (result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not pay ", userTo.getName(), " ", currency.format(amount), ": ", result.getResult()));
+        if(result.getResult() != ResultType.SUCCESS) {
+            src.sendMessage(Text.of("Could not add ", currency.format(amount), " to ", user.getName(), "'s account: ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Payed ", userTo.getName(), " ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Added ", currency.format(amount), " to ", user.getName(), "'s account!"));
         }
 
         return CommandResult.success();

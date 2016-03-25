@@ -1,5 +1,7 @@
 package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
 
+import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
+import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.spec.CommandExecutor;
@@ -9,6 +11,7 @@ import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.text.Text;
 
+import java.sql.SQLException;
 import java.util.UUID;
 
 /**
@@ -16,7 +19,7 @@ import java.util.UUID;
  */
 public abstract class FeExecutorBase implements CommandExecutor {
 
-    public EconomyService tryGetEconomyService() throws CommandException {
+    protected static EconomyService tryGetEconomyService() throws CommandException {
         try {
             return Sponge.getServiceManager().provide(EconomyService.class).orElseThrow(Exception::new);
         } catch(Exception e) {
@@ -24,8 +27,8 @@ public abstract class FeExecutorBase implements CommandExecutor {
         }
     }
 
-    public Account tryGetAccount(String key) throws CommandException {
-        EconomyService economyService = this.tryGetEconomyService();
+    protected static Account tryGetAccount(String key) throws CommandException {
+        EconomyService economyService = tryGetEconomyService();
 
         try {
             return economyService.getOrCreateAccount(key).orElseThrow(Exception::new);
@@ -34,14 +37,19 @@ public abstract class FeExecutorBase implements CommandExecutor {
         }
     }
 
-    public UniqueAccount tryGetUniqueAccount(UUID uuid) throws CommandException {
-        EconomyService economyService = this.tryGetEconomyService();
+    protected static UniqueAccount tryGetUniqueAccount(UUID uuid) throws CommandException {
+        EconomyService economyService = tryGetEconomyService();
 
         try {
             return economyService.getOrCreateAccount(uuid).orElseThrow(Exception::new);
         } catch(Exception e) {
-            throw new CommandException(Text.of("Could not get Account!"));
+            throw new CommandException(Text.of("Could not get UniqueAccount!"));
         }
+    }
+
+    protected void throwSqlException(SQLException e) throws CommandException {
+        FedorasEconomy.getLogger().error("SQL Error", e);
+        throw new CommandException(Text.of("SQL Error"), e);
     }
 
 }
