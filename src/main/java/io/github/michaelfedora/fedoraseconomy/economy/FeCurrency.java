@@ -59,6 +59,8 @@ public class FeCurrency implements Currency {
     public TextFormat getValueFormat() { return this.valueFormat; }
     public Text getBigNumSeparator() { return this.bigNumSeparator; }
 
+    public static final FeCurrency NONE = new FeCurrency("currency:_", Text.EMPTY, Text.EMPTY, Text.EMPTY, false, 0, TextFormat.NONE, Text.EMPTY);
+
     /**
      * The currency's display name, in singular form. Ex: Dollar.
      * <p>

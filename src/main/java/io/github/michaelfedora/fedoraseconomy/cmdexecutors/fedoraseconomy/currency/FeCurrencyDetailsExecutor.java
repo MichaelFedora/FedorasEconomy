@@ -1,8 +1,11 @@
 package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency;
 
+import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.FeExecutor;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
+import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -43,6 +46,8 @@ public class FeCurrencyDetailsExecutor extends FeExecutorBase {
         Text.Builder tb = Text.builder();
 
         tb.append(Text.of(TextColors.GOLD, "===== ", "Currency \"", TextColors.AQUA, currency.getName(), TextColors.GOLD, "\" Details", " =====", '\n'));
+        if(currency.equals(FeEconomyService.instance.getDefaultCurrency()))
+            tb.append(Text.of(TextColors.GRAY, "Default", TextColors.RESET,": ", TextColors.AQUA, "true\n"));
         tb.append(Text.of(TextColors.GRAY, "Identifier", TextColors.RESET,": ", currency.getId(), '\n'));
         tb.append(Text.of(TextColors.GRAY, "DisplayName: ", TextColors.RESET, currency.getDisplayName(), '\n'));
         tb.append(Text.of(TextColors.GRAY, "PluralDisplayName: ", TextColors.RESET, currency.getPluralDisplayName(), '\n'));

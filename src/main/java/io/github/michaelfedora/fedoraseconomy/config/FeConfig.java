@@ -14,18 +14,43 @@ import java.nio.file.Path;
  */
 public class FeConfig implements FeConfigurable {
 
+    public static final FeConfig instance = new FeConfig();
+
     private final ConfigurationLoader<CommentedConfigurationNode> loader;
     private CommentedConfigurationNode root;
 
-    private String defaultCurrency;
+    private String defaultCurrencyId;
     private boolean cleanOnStartup;
 
-    public String getDefaultCurrency() { return this.defaultCurrency; }
+    private FeConfig() {
+
+        this.defaultCurrencyId = null;
+        this.cleanOnStartup = false;
+
+        Path path = FedorasEconomy.getSharedConfigDir().resolve(PluginInfo.DATA_ROOT + ".cfg");
+        this.loader = HoconConfigurationLoader.builder().setPath(path).build();
+    }
+
+    public static FeConfig set(String defaultCurrency, boolean cleanOnStartup) {
+
+        instance.defaultCurrencyId = defaultCurrency;
+        instance.cleanOnStartup = cleanOnStartup;
+
+        return instance;
+    }
+
+    public static void initialize() {
+        instance.load();
+        instance.setupValues();
+        instance.save();
+    }
+
+    public String getDefaultCurrencyId() { return this.defaultCurrencyId; }
     public boolean getCleanOnStartup() { return this.cleanOnStartup; }
 
-    public void setDefaultCurrency(String defaultCurrency) {
-        this.defaultCurrency = defaultCurrency;
-        this.getNode("defaultCurrency").setValue(this.defaultCurrency);
+    public void setDefaultCurrencyId(String defaultCurrencyId) {
+        this.defaultCurrencyId = defaultCurrencyId;
+        this.getNode("defaultCurrencyId").setValue(this.defaultCurrencyId);
     }
 
     public void setCleanOnStartup(boolean cleanOnStartup) {
@@ -33,25 +58,11 @@ public class FeConfig implements FeConfigurable {
         this.getNode("cleanOnStartup").setValue(this.cleanOnStartup);
     }
 
-
-    public FeConfig(String defaultCurrency, boolean cleanOnStartup) {
-
-        this.defaultCurrency = defaultCurrency;
-        this.cleanOnStartup = cleanOnStartup;
-
-        Path path = FedorasEconomy.getSharedConfigDir().resolve(PluginInfo.DATA_ROOT + ".cfg");
-        this.loader = HoconConfigurationLoader.builder().setPath(path).build();
-
-        this.load();
-        this.setupValues();
-        this.save();
-    }
-
     private void setupValues() {
-        if(this.getNode("defaultCurrency").getValue() == null)
-            this.getNode("defaultCurrency").setComment("The default currency (in the private-plugin folder)").setValue(this.defaultCurrency);
+        if(this.getNode("defaultCurrencyId").getValue() == null)
+            this.getNode("defaultCurrencyId").setComment("The default currency's id (from those in the `/config/currencies` folder)").setValue(this.defaultCurrencyId);
         else
-            this.defaultCurrency = this.getNode("defaultCurrency").getString();
+            this.defaultCurrencyId = this.getNode("defaultCurrencyId").getString();
 
         if(this.getNode("cleanOnStartup").getValue() == null)
             this.getNode("cleanOnStartup").setComment("Clean bad/unknown currency-references & purges empty accounts on startup. WARNING: This is irreversible!").setValue(this.cleanOnStartup);

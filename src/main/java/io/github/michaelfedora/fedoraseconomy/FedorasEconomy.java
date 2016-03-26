@@ -10,12 +10,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.*;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.*;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyDetailsExecutor;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyExecutor;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyHelpExecutor;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.FeCurrencyListExecutor;
+import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency.*;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user.*;
-import io.github.michaelfedora.fedoraseconomy.config.CurrencyConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeCurrencySerializer;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
@@ -23,14 +19,17 @@ import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import io.github.michaelfedora.fedoraseconomy.listeners.EconomyTransactionListener;
 import io.github.michaelfedora.fedoraseconomy.registry.CurrencyRegistry;
 import me.flibio.updatifier.Updatifier;
+import net.minecrell.mcstats.SpongeStatsLite;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandManager;
+import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
+import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.economy.Currency;
@@ -58,6 +57,12 @@ public class FedorasEconomy {
     @Inject
     private Logger logger;
     public static Logger getLogger() { return instance.logger; }
+
+    private ConsoleSource console;
+    public static ConsoleSource getConsole() { return instance.console; }
+
+    @Inject
+    private SpongeStatsLite stats;
 
     @Inject
     @ConfigDir(sharedRoot = true)
@@ -103,6 +108,7 @@ public class FedorasEconomy {
     @Listener
     public void onPreInit(GamePreInitializationEvent gpie) {
         instance = this;
+        this.stats.start();
     }
 
     public static final FeCurrency defaultCurrency = new FeCurrency(
@@ -116,14 +122,19 @@ public class FedorasEconomy {
     @Listener
     public void onInit(GameInitializationEvent gie) {
 
-        getLogger().info("===== " + PluginInfo.NAME + " v" + PluginInfo.VERSION + ": Initializing! =====");
+        this.console = Sponge.getServer().getConsole();
+
+        //getLogger().info("===== " + PluginInfo.NAME + " v" + PluginInfo.VERSION + ": Initializing! =====");
+        console.sendMessage(Text.of(TextStyles.BOLD, TextColors.GOLD, "===== ",
+                TextStyles.RESET, TextColors.AQUA, PluginInfo.NAME, TextColors.GRAY, " v", TextColors.AQUA, PluginInfo.VERSION, TextColors.RESET, ": Initializing!",
+                TextStyles.BOLD, TextColors.GOLD, " ====="));
 
         // register listeners - transaction list
         Sponge.getEventManager().registerListeners(this, new EconomyTransactionListener());
 
+
         // register registry
-        CurrencyRegistry currencyRegistry = new CurrencyRegistry();
-        Sponge.getRegistry().registerModule(Currency.class, currencyRegistry);
+        Sponge.getRegistry().registerModule(Currency.class, CurrencyRegistry.instance);
 
         // config stuff
 
@@ -138,65 +149,29 @@ public class FedorasEconomy {
 
         TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FeCurrency.class), new FeCurrencySerializer());
 
-        FeConfig mainConfig = new FeConfig(defaultCurrency.getId().substring(defaultCurrency.getId().indexOf(':') + 1), false);
-        String defaultCurrencyId = mainConfig.getDefaultCurrency();
-        boolean cleanOnStartup = mainConfig.getCleanOnStartup();
+        FeConfig.set(defaultCurrency.getId(), false);
+        FeConfig.initialize();
 
-        FeCurrency customDefaultCurrency = null;
-
-        Map<String, CurrencyConfig> currencyConfigs = CurrencyConfig.loadAll();
-        if(currencyConfigs.size() != 0) {
-
-            int count = 0;
-            for(Map.Entry<String, CurrencyConfig> entry : currencyConfigs.entrySet()) {
-
-                entry.getValue().load();
-
-                Optional<FeCurrency> opt_fc = entry.getValue().get();
-
-                if(!opt_fc.isPresent())
-                    return;
-
-                FeCurrency fc = opt_fc.get();
-
-                logger.info("Registered currency [" + fc.getId() + "]!");
-                currencyRegistry.registerAdditionalCatalog(fc);
-
-                if(entry.getKey().equals(defaultCurrencyId)) {
-                    logger.info("Found default currency [" + defaultCurrencyId + "]!");
-                    customDefaultCurrency = fc;
-                }
-
-                if(++count == currencyConfigs.size() && customDefaultCurrency == null) {
-                    logger.warn("Could not find default currency [" + defaultCurrencyId + "](file), setting it to [" + fc.getId() + "](id)!");
-                    customDefaultCurrency = fc; // just set it to one ;3
-                }
-            }
-
-        } else {
-
-            logger.info("Could not find anything; using default currency!");
-            currencyRegistry.registerAdditionalCatalog(defaultCurrency);
-
-            customDefaultCurrency = defaultCurrency;
-            CurrencyConfig defaultConfig = new CurrencyConfig(defaultCurrency.getId().substring(defaultCurrency.getId().indexOf(':')+1));
-            defaultConfig.load();
-            defaultConfig.put(defaultCurrency);
-            defaultConfig.save();
-        }
+        FeCurrencyReloadExecutor.exec(Sponge.getServer().getConsole());
 
         // register api
-        Sponge.getServiceManager().setProvider(this, EconomyService.class, new FeEconomyService(customDefaultCurrency));
+        Sponge.getServiceManager().setProvider(this, EconomyService.class, FeEconomyService.instance);
         logger.info("Registered the Economy API!");
-
-        if(cleanOnStartup) {
-            FeCleanExecutor.cleanAll();
-            FePurgeExecutor.run();
-        }
 
         registerCommands();
 
-        getLogger().info("===== " + PluginInfo.NAME + " v" + PluginInfo.VERSION + ": Done! =====");
+        //getLogger().info("===== " + PluginInfo.NAME + " v" + PluginInfo.VERSION + ": Done! =====");
+        console.sendMessage(Text.of(TextStyles.BOLD, TextColors.GOLD, "===== ",
+                TextStyles.RESET, TextColors.AQUA, PluginInfo.NAME, TextColors.GRAY, " v", TextColors.AQUA, PluginInfo.VERSION, TextColors.RESET, ": Done!",
+                TextStyles.BOLD, TextColors.GOLD, " ====="));
+    }
+
+    @Listener
+    public void OnGameLoadComplete(GameLoadCompleteEvent glce) {
+        if(FeConfig.instance.getCleanOnStartup()) {
+            FeCleanExecutor.cleanAll();
+            FePurgeExecutor.run();
+        }
     }
 
     private void registerCommands() {
@@ -211,6 +186,8 @@ public class FedorasEconomy {
         currencyCommands.put(FeCurrencyHelpExecutor.ALIASES, FeCurrencyHelpExecutor.create());
         currencyCommands.put(FeCurrencyListExecutor.ALIASES, FeCurrencyListExecutor.create());
         currencyCommands.put(FeCurrencyDetailsExecutor.ALIASES, FeCurrencyDetailsExecutor.create());
+        currencyCommands.put(FeCurrencySetDefaultExecutor.ALIASES, FeCurrencySetDefaultExecutor.create());
+        currencyCommands.put(FeCurrencyReloadExecutor.ALIASES, FeCurrencyReloadExecutor.create());
 
         subCommands.put(FeCurrencyExecutor.ALIASES, FeCurrencyExecutor.create(currencyCommands));
 
@@ -236,6 +213,8 @@ public class FedorasEconomy {
 
         // === ===
 
+        subCommands.put(FeReloadExecutor.ALIASES, FeReloadExecutor.create());
+        subCommands.put(FeConfigExecutor.ALIASES, FeConfigExecutor.create());
         subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
         subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
         subCommands.put(FeCleanExecutor.ALIASES, FeCleanExecutor.create());

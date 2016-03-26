@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.curre
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
+import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -10,6 +11,7 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.action.HoverAction;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
@@ -42,7 +44,13 @@ public class FeCurrencyListExecutor extends FeExecutorBase {
 
         int count = 0;
         for(Currency c : currencies) {
-            tb.append(Text.builder().onHover(TextActions.showText(Text.of(c.getId()))).append(c.getDisplayName()).build());
+            tb.append(Text.builder()
+                    .onHover(TextActions.showText(Text.of(c.getId())))
+                    .append(c.getDisplayName())
+                    .append(c.equals(FeEconomyService.instance.getDefaultCurrency()) ?
+                            Text.builder().onHover(TextActions.showText(Text.of("default"))).append(Text.of(TextStyles.ITALIC, TextColors.DARK_GRAY, " (", TextColors.AQUA, "*", TextColors.DARK_GRAY, ")")).build() :
+                            Text.EMPTY)
+                    .build());
             if(++count < currencies.size())
                 tb.append(Text.of(", "));
         }

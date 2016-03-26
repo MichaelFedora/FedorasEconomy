@@ -3,6 +3,7 @@ package io.github.michaelfedora.fedoraseconomy.economy;
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
 import io.github.michaelfedora.fedoraseconomy.economy.account.FeVirtualAccount;
+import io.github.michaelfedora.fedoraseconomy.registry.CurrencyRegistry;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.context.ContextCalculator;
@@ -26,17 +27,21 @@ import java.util.UUID;
  */
 public class FeEconomyService implements EconomyService {
 
-    private Currency defaultCurrency;
+    public static final FeEconomyService instance = new FeEconomyService();
 
-    public FeEconomyService(Currency defaultCurrency) {
-        this.setDefaultCurrency(defaultCurrency);
+    private Currency defaultCurrency = FeCurrency.NONE;
+
+    private FeEconomyService() { }
+
+    public static void set(Currency defaultCurrency) {
+        instance.setDefaultCurrency(defaultCurrency);
     }
 
     public void setDefaultCurrency(Currency defaultCurrency) {
         this.defaultCurrency = defaultCurrency;
 
-        if(!this.getCurrencies().contains(defaultCurrency))
-            Sponge.getRegistry().register(Currency.class, defaultCurrency);
+        if(!CurrencyRegistry.instance.getAll().contains(defaultCurrency))
+            CurrencyRegistry.instance.registerAdditionalCatalog(defaultCurrency);
     }
 
     /**

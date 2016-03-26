@@ -22,8 +22,8 @@ public class CurrencyConfig implements FeConfigurable {
     private final ConfigurationLoader<CommentedConfigurationNode> loader;
     private CommentedConfigurationNode root;
 
-    public CurrencyConfig(String name) {
-        this.path = FedorasEconomy.getCurrenciesConfigDir().resolve(name + ".currency");
+    public CurrencyConfig(String id) {
+        this.path = FedorasEconomy.getCurrenciesConfigDir().resolve(id.substring(id.indexOf(':') + 1) + ".currency");
         this.loader = HoconConfigurationLoader.builder().setPath(this.path).build();
     }
 

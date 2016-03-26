@@ -1,6 +1,7 @@
 package io.github.michaelfedora.fedoraseconomy.registry;
 
 import com.google.common.collect.ImmutableSet;
+import io.github.michaelfedora.fedoraseconomy.config.CurrencyConfig;
 import org.spongepowered.api.registry.AdditionalCatalogRegistryModule;
 import org.spongepowered.api.service.economy.Currency;
 
@@ -14,7 +15,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class CurrencyRegistry implements AdditionalCatalogRegistryModule<Currency> {
 
+    public static final CurrencyRegistry instance = new CurrencyRegistry();
+
     private final Map<String, Currency> currencyMap = new HashMap<>();
+
+    private CurrencyRegistry() { }
+
+    public void clear() { currencyMap.clear(); }
 
     @Override
     public Optional<Currency> getById(String id) {

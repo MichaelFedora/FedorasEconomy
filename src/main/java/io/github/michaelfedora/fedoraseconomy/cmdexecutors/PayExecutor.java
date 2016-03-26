@@ -16,6 +16,7 @@ import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransferResult;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -58,9 +59,9 @@ public class PayExecutor extends FeExecutorBase {
         TransferResult result = myAccount.transfer(theirAccount, currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
 
         if(result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not pay ", user.getName(), " ", currency.format(amount), ": ", result.getResult()));
+            src.sendMessage(Text.of("Could not pay ", TextColors.AQUA, user.getName(), TextColors.RESET, " ", currency.format(amount), ": ", result.getResult()));
         } else {
-            src.sendMessage(Text.of("Payed ", user.getName(), " ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Payed ", TextColors.AQUA, user.getName(), TextColors.RESET, " ", currency.format(amount), "!"));
         }
 
         return CommandResult.success();
