@@ -12,6 +12,7 @@ Currently in BETA (3), will release soon though, just a couple more tweaks. (rea
  - Currency cataloging support (for developers, `GameRegistry` stuff)
  - Custom Currencies (with lots of formatting options!)
  - Permissions (WIP)
+
 ---
 ### Command List
 
@@ -68,10 +69,12 @@ Currently in BETA (3), will release soon though, just a couple more tweaks. (rea
 /fe [user, u] pay <userFrom> <userTo> <amount> <currency> # Pays the specified user(To) the amount from the other specified user(From)
 /fe [user, u] transfer <userFrom> <accountTo> <amount> <currency> # Transfers the amount specified from the user to the account
 ```
+
 ---
 ### TODO
  - MySQL Support (low priority)
  - Better permissions (medium priority)
+
 ---
 ### Most recent changelog(s)
 #### v1.0-PRE-1
@@ -91,6 +94,7 @@ Currently in BETA (3), will release soon though, just a couple more tweaks. (rea
  - This means all older-versioned accounts will be broken now :disappointed: Delete your h2/database files (`/mods/FedorasData/econAccounts.*`) and start over!
 - Added output for transactions (deposit/withdraw), like if someone payed you something.
 - Many other things.
+
 ---
 ### Links
 
