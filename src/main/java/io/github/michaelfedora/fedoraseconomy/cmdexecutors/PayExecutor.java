@@ -33,7 +33,7 @@ public class PayExecutor extends FeExecutorBase {
     public static CommandSpec create() {
         return CommandSpec.builder()
                 .description(Text.of("Pay another user"))
-                .permission(PluginInfo.DATA_ROOT + '.' + NAME)
+                .permission(PluginInfo.DATA_ROOT + ".global." + NAME)
                 .arguments(GenericArguments.user(Text.of("user")),
                         GenericArguments.doubleNum(Text.of("amount")),
                         GenericArguments.catalogedElement(Text.of("currency"), Currency.class))

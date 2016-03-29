@@ -31,7 +31,7 @@ public class BalanceExecutor extends FeExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Check your balances"))
                 .extendedDescription(Text.of("Check your balance, or a specific players"))
-                .permission(PluginInfo.DATA_ROOT + '.' + NAME)
+                .permission(PluginInfo.DATA_ROOT + ".global." + NAME)
                 .arguments(GenericArguments.optional(GenericArguments.user(Text.of("user"))))
                 .executor(new BalanceExecutor())
                 .build();
@@ -41,7 +41,7 @@ public class BalanceExecutor extends FeExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Check your balances"))
                 .extendedDescription(Text.of("Check your balance, or a specific players"))
-                .permission(PluginInfo.DATA_ROOT + '.' + NAME)
+                .permission(PluginInfo.DATA_ROOT + ".global." + NAME)
                 .arguments(GenericArguments.optional(GenericArguments.user(Text.of("user"))))
                 .children(Collections.singletonMap(PayExecutor.ALIASES, PayExecutor.create()))
                 .executor(new BalanceExecutor())
