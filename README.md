@@ -1,9 +1,11 @@
 # Fedora's Economy
+
 #### Built for `Sponge 4.1.0-SNAPSHOT`, and off of `JDK 1.8.0_71`.
 
 Just another (light-weight) Economy implementation `^_^` .
 
 ---
+
 ### Features
  - H2 Database backend
  - Multi-currency support
@@ -12,6 +14,7 @@ Just another (light-weight) Economy implementation `^_^` .
  - Permissions (WIP)
 
 ---
+
 ### Command List
 
 #### Legend
@@ -36,6 +39,7 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 | `/money pay <user> <amount> <currency>` | see `/pay` | Alias to `/pay` (pretty fancy huh?) |
 
 #### Plugin Commands
+
 ##### Root
 | Command & Usage | Permission | Description|
 |:----------------|:-----------|:-----------|
@@ -54,6 +58,7 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 | `/fe add <accountName> <amount> <currency>` | `fedoraseconomy.add` | Adds the amount specified to the account's balance
 | `/fe pay <accountFrom> <userTo> <amount> <currency>` | `fedoraseconomy.pay` | Pays the specified user the amount from the specified account
 | `/fe transfer <accountFrom> <accountTo> <amount> <currency>` | `fedoraseconomy.transfer` | Transfers the amount specified from the first account to the second
+
 ##### Currency
 | Command & Usage | Permission | Description|
 |:----------------|:-----------|:-----------|
@@ -79,24 +84,36 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 | `/fe [user, u] transfer <userFrom> <accountTo> <amount> <currency>` | `fedoraseconomy.user.transfer` | Transfers the amount specified from the user to the account
 
 ---
+
 ### TODO
  - MySQL Support (low priority)
  - Business support (could be implemented by separate plugin, tbh, so low priority)
 
 ---
+
 ### Most recent changelog(s)
+
+#### v1.0.1
+- Adjusted Stats linking
+
 #### v1.0
 - Adjusted permissions
 - Released (finally)!
 
 ---
+
 ### Links
 
-[Github Source](https://github.com/MichaelFedora/FedorasEconomy)
+[![Github Source](https://img.shields.io/badge/source-on%20GitHub-brightgreen.svg)](https://github.com/MichaelFedora/FedorasEconomy)
 
-[Downloads](https://github.com/MichaelFedora/FedorasEconomy/releases)
+[![Downloads](https://img.shields.io/github/downloads/MichaelFedora/FedorasEconomy/total.svg)](https://github.com/MichaelFedora/FedorasEconomy/releases)
+
+- Latest: [![Latest](https://img.shields.io/github/downloads/MichaelFedora/FedorasEconomy/latest/total.svg)](https://github.com/MichaelFedora/FedorasEconomy/releases/latest)
+
+[![Iissues](https://img.shields.io/github/issues/MichaelFedora/FedorasEconomy.svg)](https://github.com/MichaelFedora/FedorasEconomy/issues)
 
 ---
+
 ## Big thanks to a couple of people
  - **God**, for creating this awesome place to live in, and for giving me the time and talents to create this. All glory to him.
  - The **SpongePowered** team for making their API (including all their contributors)
@@ -107,8 +124,9 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 I couldn't have made this without you. :heart:
 
 ---
+
 Enjoy!
 
-![stats or something](http://i.mcstats.org/Fedora's%20Economy/Global+Statistics.png)
+![stats or something](http://i.mcstats.org/FedorasEconomy/Global+Statistics.png)
 
 <right><sup>*Soli deo gloria*</sup></right>
