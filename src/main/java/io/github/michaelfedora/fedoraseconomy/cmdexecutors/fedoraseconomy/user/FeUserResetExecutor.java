@@ -17,28 +17,25 @@ import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextStyles;
 
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
- * Created by Michael on 3/23/2016.
+ * Created by Michael on 3/19/2016.
  */
-public class FeUserSetExecutor extends FeExecutorBase {
+public class FeUserResetExecutor extends FeExecutorBase {
 
-    public static final List<String> ALIASES = Collections.singletonList("set");
+    public static final List<String> ALIASES = Arrays.asList("reset", "zero");
 
     public static final String NAME = ALIASES.get(0);
 
     public static CommandSpec create() {
         return CommandSpec.builder()
-                .description(Text.of("Set a user account's balance"))
+                .description(Text.of("Resets a user's balance to zero"))
                 .permission(PluginInfo.DATA_ROOT + '.' + NAME)
-                .arguments(GenericArguments.user(Text.of("user")),
-                        GenericArguments.doubleNum(Text.of("amount")),
-                        GenericArguments.catalogedElement(Text.of("currency"), Currency.class))
-                .executor(new FeUserSetExecutor())
+                .arguments(GenericArguments.user(Text.of("user")))
+                .executor(new FeUserResetExecutor())
                 .build();
     }
 
@@ -49,16 +46,22 @@ public class FeUserSetExecutor extends FeExecutorBase {
 
         FeUniqueAccount account = tryGetUniqueAccount(user.getUniqueId());
 
-        BigDecimal amount = BigDecimal.valueOf(args.<Double>getOne("amount").orElseThrow(() -> new CommandException(Text.of("Bad param [amount]!"))));
+        Map<Currency, TransactionResult> result = account.resetBalances(Cause.of(NamedCause.of(src.getName(), src)), null, true);
 
-        Currency currency = args.<Currency>getOne("currency").orElseThrow(() -> new CommandException(Text.of("Bad param [currency]!")));
+        boolean success = false;
+        boolean failure = false;
 
-        TransactionResult result = account.setBalance(currency, amount, Cause.of(NamedCause.of(src.getName(), src)), null, true);
+        for(Map.Entry<Currency, TransactionResult> e : result.entrySet()) {
+            if(e.getValue().getResult() == ResultType.SUCCESS) success = true;
+            else failure = true;
+        }
 
-        if(result.getResult() != ResultType.SUCCESS) {
-            src.sendMessage(Text.of("Could not set ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s balance to ", currency.format(amount), ": ", result.getResult()));
+        if(failure && !success) {
+            src.sendMessage(Text.of("Could not reset ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s account"));
+        } if(failure && success) {
+            src.sendMessage(Text.of("Could not ", TextStyles.ITALIC, "totally", TextStyles.RESET, " reset", TextColors.AQUA, user.getName(), TextColors.RESET, "'s account"));
         } else {
-            src.sendMessage(Text.of("Set ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s balance to ", currency.format(amount), "!"));
+            src.sendMessage(Text.of("Reset ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s account"));
         }
 
         return CommandResult.success();

@@ -21,6 +21,8 @@ public class FeTransactionResult implements TransactionResult {
     private final Set<Context> contexts;
     private final ResultType result;
     private final TransactionType type;
+    
+    private final boolean internal;
 
     public FeTransactionResult(Account account, Currency currency, BigDecimal amount, Set<Context> contexts, ResultType result, TransactionType type) {
         this.account = account;
@@ -29,6 +31,17 @@ public class FeTransactionResult implements TransactionResult {
         this.contexts = contexts;
         this.result = result;
         this.type = type;
+        this.internal = false;
+    }
+
+    public FeTransactionResult(Account account, Currency currency, BigDecimal amount, Set<Context> contexts, ResultType result, TransactionType type, boolean internal) {
+        this.account = account;
+        this.currency = currency;
+        this.amount = amount;
+        this.contexts = contexts;
+        this.result = result;
+        this.type = type;
+        this.internal = internal;
     }
 
     public FeTransactionResult(TransactionResult transactionResult) {
@@ -38,6 +51,10 @@ public class FeTransactionResult implements TransactionResult {
         this.contexts = transactionResult.getContexts();
         this.result = transactionResult.getResult();
         this.type = transactionResult.getType();
+        if(FeTransactionResult.class.isAssignableFrom(transactionResult.getClass()))
+            this.internal = ((FeTransactionResult) transactionResult).internal;
+        else
+            this.internal = false;
     }
 
     /**
@@ -100,4 +117,6 @@ public class FeTransactionResult implements TransactionResult {
     public TransactionType getType() {
         return this.type;
     }
+
+    public boolean isInternal() { return this.internal; }
 }

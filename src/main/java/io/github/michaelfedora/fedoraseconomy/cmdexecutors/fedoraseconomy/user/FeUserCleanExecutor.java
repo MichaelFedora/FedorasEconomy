@@ -3,6 +3,7 @@ package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user;
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -10,9 +11,7 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.User;
-import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
@@ -47,7 +46,7 @@ public class FeUserCleanExecutor extends FeExecutorBase {
         User user = args.<User>getOne("user").orElseThrow(() -> new CommandException(Text.of("Bad param [user]!")));
 
         Set<String> goodIds = new HashSet<>();
-        UniqueAccount uniqueAccount = tryGetUniqueAccount(user.getUniqueId());
+        FeUniqueAccount uniqueAccount = tryGetUniqueAccount(user.getUniqueId());
         uniqueAccount.getBalances().keySet().forEach((c) -> goodIds.add(c.getId()));
 
         try(Connection conn = FedorasEconomy.getAccountsConnection()) {

@@ -1,6 +1,6 @@
 # Fedora's Economy
 
-#### Built for `Sponge 4.1.0-SNAPSHOT`, and off of `JDK 1.8.0_71`.
+#### Built for `Sponge 4.2.0-SNAPSHOT` *(`1.8.9`)* and `Sponge v5.0.0-SNAPSHOT` *(`1.10.2`)*, and off of `JDK 1.8.0_101`.
 
 Just another (light-weight) Economy implementation `^_^` .
 
@@ -47,7 +47,8 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 | `/fe [currency, c] ...` | `fedoraseconomy.currency.[...]` | The currency subcommand group (see below)
 | `/fe [user, u] ...` | `fedoraseconomy.user.[...]` | The user subcommand group (see below)
 | `/fe [help, ?] (cmd)` | `fedoraseconomy.help` | The help command, shows all subcommands & usages or the specified command's details
-| `/fe config [--cos, --cleanOnStart <cleanOnStart>] [--dc, --defaultCurrency <defaultCurrency>]` | `fedoraseconomy.config` | Change the main-config, via flags, and saves it
+| `/fe config [--cos, --cleanOnStart <true|false>] [--dc, --defaultCurrency <defaultCurrency>] [--v, -verboseLogging <true|false>` | `fedoraseconomy.config` | Changes the main-config, via flags, and saves it
+| `/fe getconfig [--cos, --cleanOnStart <cleanOnStart>] [--dc, --defaultCurrency <defaultCurrency>]` | `fedoraseconomy.config` | Gets values from the main-config, via flags
 | `/fe reload` | `fedoraseconomy.reload` | Reloads *every* config
 | `/fe [list, l]` | `fedoraseconomy.list` |Lists all the (valid) accounts in the database
 | `/fe clean <accountName>` | `fedoraseconomy.clean` | Cleans the account of bad-references (to old currencies)
@@ -58,6 +59,7 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 | `/fe add <accountName> <amount> <currency>` | `fedoraseconomy.add` | Adds the amount specified to the account's balance
 | `/fe pay <accountFrom> <userTo> <amount> <currency>` | `fedoraseconomy.pay` | Pays the specified user the amount from the specified account
 | `/fe transfer <accountFrom> <accountTo> <amount> <currency>` | `fedoraseconomy.transfer` | Transfers the amount specified from the first account to the second
+| `/fe [reset, zero] <accountName>` | `fedoraseconomy.reset` | Resets an account's balance to zero
 
 ##### Currency
 | Command & Usage | Permission | Description|
@@ -82,6 +84,7 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 | `/fe [user, u] add <user> <amount> <currency>` | `fedoraseconomy.user.add` | Adds the amount specified to the user's balance
 | `/fe [user, u] pay <userFrom> <userTo> <amount> <currency>` | `fedoraseconomy.user.pay` | Pays the specified user(To) the amount from the other specified user(From)
 | `/fe [user, u] transfer <userFrom> <accountTo> <amount> <currency>` | `fedoraseconomy.user.transfer` | Transfers the amount specified from the user to the account
+| `/fe [user, u] [reset, zero] <user>` | `fedoraseconomy.reset` | Resets a user's balance to zero
 
 ---
 
@@ -93,12 +96,14 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 
 ### Most recent changelog(s)
 
-#### v1.0.1
-- Adjusted Stats linking
-
-#### v1.0
-- Adjusted permissions
-- Released (finally)!
+#### v1.1.0
+- Added `verboseLogging` option to toggle whether or not it should display messages from all transactions vs internal commands only
+- Added `fe [reset, zero] <account>` and `fe user [reset, zero] <user>` to reset or "zero" an account's balances
+- Added highlighting to `fe config`
+- Added `fe getconfig` to get config values
+- Updated to Sponge API v4.2.0 & started supporting v5.0.0
+- Fixed `fe [user, u]` requiring a user parameter to show subcommands (*sigh*)
+- Fixed formatting issues with negative amounts of currency
 
 ---
 

@@ -30,7 +30,7 @@ public class FeUserExecutor extends FeExecutorBase {
         return CommandSpec.builder()
                 .description(Text.of("Do things with user accounts (lists subcommands)"))
                 .permission(PluginInfo.DATA_ROOT + '.' + NAME + ".use")
-                .arguments(GenericArguments.user(Text.of("user")))
+                .arguments(GenericArguments.none())
                 .children(children)
                 .executor(new FeUserExecutor())
                 .build();

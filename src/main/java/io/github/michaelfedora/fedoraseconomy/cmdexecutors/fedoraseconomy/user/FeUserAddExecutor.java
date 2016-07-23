@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -12,7 +13,6 @@ import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.service.economy.Currency;
-import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
@@ -47,7 +47,7 @@ public class FeUserAddExecutor extends FeExecutorBase {
 
         User user = args.<User>getOne("user").orElseThrow(() -> new CommandException(Text.of("Bad param [user]!")));
 
-        UniqueAccount account = tryGetUniqueAccount(user.getUniqueId());
+        FeUniqueAccount account = tryGetUniqueAccount(user.getUniqueId());
 
         BigDecimal amount = BigDecimal.valueOf(args.<Double>getOne("amount").orElseThrow(() -> new CommandException(Text.of("Bad param [amount]!"))));
 
@@ -55,9 +55,9 @@ public class FeUserAddExecutor extends FeExecutorBase {
 
         TransactionResult result;
         if(amount.compareTo(BigDecimal.ZERO) < 0)
-            result = account.withdraw(currency, amount.abs(), Cause.of(NamedCause.of(src.getName(), src)));
+            result = account.withdraw(currency, amount.abs(), Cause.of(NamedCause.of(src.getName(), src)), null, true);
         else
-            result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
+            result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)), null, true);
 
         if(result.getResult() != ResultType.SUCCESS) {
             src.sendMessage(Text.of("Could not add ", currency.format(amount), " to ", TextColors.AQUA, user.getName(), TextColors.RESET, "'s account: ", result.getResult()));

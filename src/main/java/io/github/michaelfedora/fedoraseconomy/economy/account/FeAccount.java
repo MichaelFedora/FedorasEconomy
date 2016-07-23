@@ -30,6 +30,16 @@ public abstract class FeAccount implements Account {
     private final String identifier;
     private final Text displayName;
 
+    FeAccount(Account account, Text displayName) {
+
+        this.identifier = account.getIdentifier();
+
+        if(FeAccount.class.isAssignableFrom(account.getClass()))
+            this.displayName = account.getDisplayName();
+        else
+            this.displayName = displayName;
+    }
+
     FeAccount(String identifier, Text displayName) {
 
         if(!identifier.toLowerCase().startsWith("account:"))
@@ -214,6 +224,10 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransactionResult setBalance(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+        return this.setBalance(currency, amount, cause, contexts, false);
+    }
+
+    public FeTransactionResult setBalance(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts, boolean internal) {
 
         FeTransactionResult result;
 
@@ -271,12 +285,12 @@ public abstract class FeAccount implements Account {
                 update = statement.executeUpdate();
             }
 
-            result = new FeTransactionResult(this, currency, diff, contexts, ResultType.SUCCESS, trans_type);
+            result = new FeTransactionResult(this, currency, diff, contexts, ResultType.SUCCESS, trans_type, internal);
 
         } catch(SQLException e) {
             FedorasEconomy.getLogger().error("SQL Error", e);
 
-            result = new FeTransactionResult(this, currency, diff, contexts, ResultType.FAILED, trans_type);
+            result = new FeTransactionResult(this, currency, diff, contexts, ResultType.FAILED, trans_type, internal);
         }
 
         // Do something with `update`?
@@ -297,6 +311,10 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public Map<Currency, TransactionResult> resetBalances(Cause cause, Set<Context> contexts) {
+        return this.resetBalances(cause, contexts, false);
+    }
+
+    public Map<Currency, TransactionResult> resetBalances(Cause cause, Set<Context> contexts, boolean internal) {
 
         Map<Currency, TransactionResult> transactions = new HashMap<>();
         Set<Currency> currencies;
@@ -323,7 +341,7 @@ public abstract class FeAccount implements Account {
                 }
 
                 if(currency.isPresent()) {
-                    TransactionResult tr = this.resetBalance(currency.get(), cause, contexts);
+                    TransactionResult tr = this.resetBalance(currency.get(), cause, contexts, internal);
                     transactions.put(currency.get(), tr);
                 }
             }
@@ -346,7 +364,11 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransactionResult resetBalance(Currency currency, Cause cause, Set<Context> contexts) {
-        return this.setBalance(currency, getDefaultBalance(currency), cause, contexts);
+        return this.setBalance(currency, getDefaultBalance(currency), cause, contexts, false);
+    }
+
+    public TransactionResult resetBalance(Currency currency, Cause cause, Set<Context> contexts, boolean internal) {
+        return this.setBalance(currency, getDefaultBalance(currency), cause, contexts, internal);
     }
 
     /**
@@ -361,6 +383,10 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransactionResult deposit(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+        return this.deposit(currency, amount, cause, contexts, false);
+    }
+
+    public TransactionResult deposit(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts, boolean internal) {
 
         FeTransactionResult result;
 
@@ -393,12 +419,12 @@ public abstract class FeAccount implements Account {
                 update = statement.executeUpdate();
             }
 
-            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.DEPOSIT);
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.DEPOSIT, internal);
 
         } catch(SQLException e) {
             FedorasEconomy.getLogger().error("SQL Error", e);
 
-            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.DEPOSIT);
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.DEPOSIT, internal);
         }
 
         // Do something with `update`?
@@ -420,6 +446,10 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransactionResult withdraw(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+        return this.withdraw(currency, amount, cause, contexts, false);
+    }
+
+    public TransactionResult withdraw(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts, boolean internal) {
 
         FeTransactionResult result;
 
@@ -451,7 +481,7 @@ public abstract class FeAccount implements Account {
 
                 } else {
 
-                    return new FeTransactionResult(this, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS, TransactionTypes.WITHDRAW);
+                    return new FeTransactionResult(this, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS, TransactionTypes.WITHDRAW, internal);
                 }
 
             } else {
@@ -466,12 +496,12 @@ public abstract class FeAccount implements Account {
 
             }
 
-            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.WITHDRAW);
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.SUCCESS, TransactionTypes.WITHDRAW, internal);
 
         } catch(SQLException e) {
             FedorasEconomy.getLogger().error("SQL Error", e);
 
-            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.WITHDRAW);
+            result = new FeTransactionResult(this, currency, amount, contexts, ResultType.FAILED, TransactionTypes.WITHDRAW, internal);
         }
 
         // Do something with `update`?
@@ -498,6 +528,10 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransferResult transfer(Account to, Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
+        return this.transfer(to, currency, amount, cause, contexts, false);
+    }
+
+    public TransferResult transfer(Account to, Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts, boolean internal) {
 
         FeTransferResult transferResult;
 
@@ -505,7 +539,7 @@ public abstract class FeAccount implements Account {
 
         if(!this.hasBalance(currency, contexts) && this.getDefaultBalance(currency).compareTo(amount) < 0) {
 
-            transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS, internal);
 
             FeEconomyTransferEvent.of(transferResult, cause).fire();
 
@@ -514,7 +548,7 @@ public abstract class FeAccount implements Account {
 
         if(this.getBalance(currency, contexts).compareTo(amount) < 0) {
 
-            transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS);
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS, internal);
 
             FeEconomyTransferEvent.of(transferResult, cause).fire();
 
@@ -525,7 +559,7 @@ public abstract class FeAccount implements Account {
 
         if(result.getResult() != ResultType.SUCCESS) {
 
-            transferResult = new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, result.getResult(), internal);
 
             FeEconomyTransferEvent.of(transferResult, cause).fire();
 
@@ -538,14 +572,14 @@ public abstract class FeAccount implements Account {
 
             this.deposit(currency, amount, cause, contexts);
 
-            transferResult = new FeTransferResult(this, to, currency, amount, contexts, result.getResult());
+            transferResult = new FeTransferResult(this, to, currency, amount, contexts, result.getResult(), internal);
 
             FeEconomyTransferEvent.of(transferResult, cause).fire();
 
             return transferResult;
         }
 
-        transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.SUCCESS);
+        transferResult = new FeTransferResult(this, to, currency, amount, contexts, ResultType.SUCCESS, internal);
 
         FeEconomyTransferEvent.of(transferResult, cause).fire();
 

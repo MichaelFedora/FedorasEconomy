@@ -22,6 +22,11 @@ public class FeTransferResult extends FeTransactionResult implements TransferRes
         this.accountTo = accountTo;
     }
 
+    public FeTransferResult(Account accountFrom, Account accountTo, Currency currency, BigDecimal amount, Set<Context> contexts, ResultType result, boolean internal) {
+        super(accountFrom, currency, amount, contexts, result, TransactionTypes.TRANSFER, internal);
+        this.accountTo = accountTo;
+    }
+
     public FeTransferResult(TransferResult transferResult) {
         super(transferResult);
         this.accountTo = transferResult.getAccountTo();

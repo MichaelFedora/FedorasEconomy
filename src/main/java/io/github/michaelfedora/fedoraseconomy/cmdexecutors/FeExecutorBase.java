@@ -1,6 +1,9 @@
 package io.github.michaelfedora.fedoraseconomy.cmdexecutors;
 
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeAccount;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeVirtualAccount;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.spec.CommandExecutor;
@@ -25,21 +28,25 @@ public abstract class FeExecutorBase implements CommandExecutor {
         }
     }
 
-    protected static Account tryGetAccount(String key) throws CommandException {
+    protected static FeAccount tryGetAccount(String key) throws CommandException {
         EconomyService economyService = tryGetEconomyService();
 
         try {
-            return economyService.getOrCreateAccount(key).orElseThrow(Exception::new);
+            Account a =  economyService.getOrCreateAccount(key).orElseThrow(Exception::new);
+            if(FeAccount.class.isAssignableFrom(a.getClass())) return (FeAccount) a;
+            else return new FeVirtualAccount(a);
         } catch(Exception e) {
             throw new CommandException(Text.of("Could not get Account!"));
         }
     }
 
-    protected static UniqueAccount tryGetUniqueAccount(UUID uuid) throws CommandException {
+    protected static FeUniqueAccount tryGetUniqueAccount(UUID uuid) throws CommandException {
         EconomyService economyService = tryGetEconomyService();
 
         try {
-            return economyService.getOrCreateAccount(uuid).orElseThrow(Exception::new);
+            UniqueAccount ua = economyService.getOrCreateAccount(uuid).orElseThrow(Exception::new);
+            if(FeUniqueAccount.class.isAssignableFrom(ua.getClass())) return (FeUniqueAccount) ua;
+            else return new FeUniqueAccount(ua);
         } catch(Exception e) {
             throw new CommandException(Text.of("Could not get UniqueAccount!"));
         }

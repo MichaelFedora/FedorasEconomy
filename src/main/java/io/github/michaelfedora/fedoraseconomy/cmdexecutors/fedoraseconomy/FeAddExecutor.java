@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeAccount;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -11,7 +12,6 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.service.economy.Currency;
-import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
@@ -46,7 +46,7 @@ public class FeAddExecutor extends FeExecutorBase {
 
         String accountName = args.<String>getOne("accountName").orElseThrow(() -> new CommandException(Text.of("Bad param [accountName]!")));
 
-        Account account = tryGetAccount(accountName);
+        FeAccount account = tryGetAccount(accountName);
 
         BigDecimal amount = BigDecimal.valueOf(args.<Double>getOne("amount").orElseThrow(() -> new CommandException(Text.of("Bad param [amount]!"))));
 
@@ -54,9 +54,9 @@ public class FeAddExecutor extends FeExecutorBase {
 
         TransactionResult result;
         if(amount.compareTo(BigDecimal.ZERO) < 0)
-            result = account.withdraw(currency, amount.abs(), Cause.of(NamedCause.of(src.getName(), src)));
+            result = account.withdraw(currency, amount.abs(), Cause.of(NamedCause.of(src.getName(), src)), null, true);
         else
-            result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
+            result = account.deposit(currency, amount, Cause.of(NamedCause.of(src.getName(), src)), null, true);
 
         if(result.getResult() != ResultType.SUCCESS) {
             src.sendMessage(Text.of("Could not add ", currency.format(amount), " to ", TextColors.AQUA, account.getDisplayName(), TextColors.RESET, ": ", result.getResult()));

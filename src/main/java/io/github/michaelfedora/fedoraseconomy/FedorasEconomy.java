@@ -149,7 +149,7 @@ public class FedorasEconomy {
 
         TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FeCurrency.class), new FeCurrencySerializer());
 
-        FeConfig.set(defaultCurrency.getId(), false);
+        FeConfig.initDefaultCurrencyId = defaultCurrency.getId();
         FeConfig.initialize();
 
         FeCurrencyReloadExecutor.exec(Sponge.getServer().getConsole());
@@ -206,6 +206,7 @@ public class FedorasEconomy {
         userCommands.put(FeUserAddExecutor.ALIASES, FeUserAddExecutor.create());
         userCommands.put(FeUserPayExecutor.ALIASES, FeUserPayExecutor.create());
         userCommands.put(FeUserTransferExecutor.ALIASES, FeUserTransferExecutor.create());
+        userCommands.put(FeUserResetExecutor.ALIASES, FeUserResetExecutor.create());
 
         subCommands.put(FeUserExecutor.ALIASES, FeUserExecutor.create(userCommands));
 
@@ -215,6 +216,7 @@ public class FedorasEconomy {
 
         subCommands.put(FeReloadExecutor.ALIASES, FeReloadExecutor.create());
         subCommands.put(FeConfigExecutor.ALIASES, FeConfigExecutor.create());
+        subCommands.put(FeGetConfigExecutor.ALIASES, FeGetConfigExecutor.create());
         subCommands.put(FeHelpExecutor.ALIASES, FeHelpExecutor.create());
         subCommands.put(FeListExecutor.ALIASES, FeListExecutor.create());
         subCommands.put(FeCleanExecutor.ALIASES, FeCleanExecutor.create());
@@ -225,6 +227,7 @@ public class FedorasEconomy {
         subCommands.put(FeAddExecutor.ALIASES, FeAddExecutor.create());
         subCommands.put(FePayExecutor.ALIASES, FePayExecutor.create());
         subCommands.put(FeTransferExecutor.ALIASES, FeTransferExecutor.create());
+        subCommands.put(FeResetExecutor.ALIASES, FeResetExecutor.create());
 
         commandManager.register(this, FeExecutor.create(subCommands), FeExecutor.ALIASES);
     }

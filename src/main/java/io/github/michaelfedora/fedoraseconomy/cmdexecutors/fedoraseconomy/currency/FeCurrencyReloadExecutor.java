@@ -3,8 +3,6 @@ package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.curre
 import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.FeCleanExecutor;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.FePurgeExecutor;
 import io.github.michaelfedora.fedoraseconomy.config.CurrencyConfig;
 import io.github.michaelfedora.fedoraseconomy.config.FeConfig;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;

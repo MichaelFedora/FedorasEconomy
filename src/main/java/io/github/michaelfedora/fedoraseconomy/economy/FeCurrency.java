@@ -125,11 +125,9 @@ public class FeCurrency implements Currency {
         Text.Builder formatted = Text.builder();
 
         amount = amount.setScale(numFractionDigits, RoundingMode.FLOOR);
-        String amountString = amount.toString();
+        String amountString = amount.abs().toString();
         int indexOfDecimal = amountString.indexOf('.');
         indexOfDecimal = (indexOfDecimal < amountString.length() && indexOfDecimal > 0) ? indexOfDecimal : amountString.length();
-
-        Text.Builder tb = Text.builder();
 
         List<Integer> placeForSeparator = new ArrayList<>();
         int count = 0;
@@ -140,6 +138,9 @@ public class FeCurrency implements Currency {
         }
 
         Collections.reverse(placeForSeparator);
+
+        Text.Builder tb = Text.builder();
+        if(amount.compareTo(BigDecimal.ZERO) < 0) tb.append(Text.of(this.bigNumSeparator.getFormat(), '-'));
 
         int begin = 0;
         for(int i : placeForSeparator) {

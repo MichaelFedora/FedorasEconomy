@@ -36,6 +36,11 @@ public class FeUniqueAccount extends FeAccount implements UniqueAccount {
         this.uuid = uuid;
     }
 
+    public FeUniqueAccount(UniqueAccount account) {
+        super(account, makeDisplayName(account.getUniqueId()));
+        this.uuid = account.getUniqueId();
+    }
+
     public static Optional<FeUniqueAccount> fromAccount(Account account) {
         final String uuid_string = account.getIdentifier().substring("account:".length());
         if(!uuid_string.matches("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"))

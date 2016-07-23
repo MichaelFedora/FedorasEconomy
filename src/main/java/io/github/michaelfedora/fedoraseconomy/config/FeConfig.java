@@ -19,27 +19,29 @@ public class FeConfig implements FeConfigurable {
     private final ConfigurationLoader<CommentedConfigurationNode> loader;
     private CommentedConfigurationNode root;
 
+    public static String initDefaultCurrencyId = null;
+    public static boolean initCleanOnStartup = false;
+    public static boolean initVerboseLogging = false;
+
     private String defaultCurrencyId;
     private boolean cleanOnStartup;
+    private boolean verboseLogging;
 
     private FeConfig() {
 
-        this.defaultCurrencyId = null;
-        this.cleanOnStartup = false;
+        this.defaultCurrencyId = initDefaultCurrencyId;
+        this.cleanOnStartup = initCleanOnStartup;
+        this.verboseLogging = initVerboseLogging;
 
         Path path = FedorasEconomy.getSharedConfigDir().resolve(PluginInfo.DATA_ROOT + ".cfg");
         this.loader = HoconConfigurationLoader.builder().setPath(path).build();
     }
 
-    public static FeConfig set(String defaultCurrency, boolean cleanOnStartup) {
-
-        instance.defaultCurrencyId = defaultCurrency;
-        instance.cleanOnStartup = cleanOnStartup;
-
-        return instance;
-    }
-
     public static void initialize() {
+        instance.defaultCurrencyId = initDefaultCurrencyId;
+        instance.cleanOnStartup = initCleanOnStartup;
+        instance.verboseLogging = initVerboseLogging;
+
         instance.load();
         instance.setupValues();
         instance.save();
@@ -47,6 +49,7 @@ public class FeConfig implements FeConfigurable {
 
     public String getDefaultCurrencyId() { return this.defaultCurrencyId; }
     public boolean getCleanOnStartup() { return this.cleanOnStartup; }
+    public boolean getVerboseLogging() { return this.verboseLogging; }
 
     public void setDefaultCurrencyId(String defaultCurrencyId) {
         this.defaultCurrencyId = defaultCurrencyId;
@@ -56,6 +59,11 @@ public class FeConfig implements FeConfigurable {
     public void setCleanOnStartup(boolean cleanOnStartup) {
         this.cleanOnStartup = cleanOnStartup;
         this.getNode("cleanOnStartup").setValue(this.cleanOnStartup);
+    }
+
+    public void setVerboseLogging(boolean verboseLogging) {
+        this.verboseLogging = verboseLogging;
+        this.getNode("verboseLogging").setValue(this.verboseLogging);
     }
 
     private void setupValues() {
@@ -68,6 +76,11 @@ public class FeConfig implements FeConfigurable {
             this.getNode("cleanOnStartup").setComment("Clean bad/unknown currency-references & purges empty accounts on startup. WARNING: This is irreversible!").setValue(this.cleanOnStartup);
         else
             this.cleanOnStartup = this.getNode("cleanOnStartup").getBoolean();
+
+        if(this.getNode("verboseLogging").getValue() == null)
+            this.getNode("verboseLogging").setComment("Log (chat) *everything* that happens to an (your) account. TRUE: Everything. FALSE: This plugin's commands only.").setValue(this.verboseLogging);
+        else
+            this.verboseLogging = this.getNode("verboseLogging").getBoolean();
     }
 
     @Override

@@ -1,7 +1,6 @@
 package io.github.michaelfedora.fedoraseconomy.registry;
 
 import com.google.common.collect.ImmutableSet;
-import io.github.michaelfedora.fedoraseconomy.config.CurrencyConfig;
 import org.spongepowered.api.registry.AdditionalCatalogRegistryModule;
 import org.spongepowered.api.service.economy.Currency;
 

@@ -1,9 +1,7 @@
 package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.currency;
 
-import io.github.michaelfedora.fedoraseconomy.FedorasEconomy;
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
-import io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.FeExecutor;
 import io.github.michaelfedora.fedoraseconomy.economy.FeCurrency;
 import io.github.michaelfedora.fedoraseconomy.economy.FeEconomyService;
 import org.spongepowered.api.command.CommandException;

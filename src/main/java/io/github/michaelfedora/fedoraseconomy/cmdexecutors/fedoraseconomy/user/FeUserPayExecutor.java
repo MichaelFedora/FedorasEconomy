@@ -2,6 +2,7 @@ package io.github.michaelfedora.fedoraseconomy.cmdexecutors.fedoraseconomy.user;
 
 import io.github.michaelfedora.fedoraseconomy.PluginInfo;
 import io.github.michaelfedora.fedoraseconomy.cmdexecutors.FeExecutorBase;
+import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -12,7 +13,6 @@ import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.service.economy.Currency;
-import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransferResult;
 import org.spongepowered.api.text.Text;
@@ -53,10 +53,10 @@ public class FeUserPayExecutor extends FeExecutorBase {
 
         Currency currency = args.<Currency>getOne("currency").orElseThrow(() -> new CommandException(Text.of("Bad param [currency]!")));
 
-        UniqueAccount myAccount = tryGetUniqueAccount(userFrom.getUniqueId());
-        UniqueAccount theirAccount = tryGetUniqueAccount(userTo.getUniqueId());
+        FeUniqueAccount myAccount = tryGetUniqueAccount(userFrom.getUniqueId());
+        FeUniqueAccount theirAccount = tryGetUniqueAccount(userTo.getUniqueId());
 
-        TransferResult result = myAccount.transfer(theirAccount, currency, amount, Cause.of(NamedCause.of(src.getName(), src)));
+        TransferResult result = myAccount.transfer(theirAccount, currency, amount, Cause.of(NamedCause.of(src.getName(), src)), null, true);
 
         if (result.getResult() != ResultType.SUCCESS) {
             src.sendMessage(Text.of("Could not pay ", TextColors.AQUA, userTo.getName(), TextColors.RESET, " ", currency.format(amount), ": ", result.getResult()));

@@ -1,7 +1,9 @@
 package io.github.michaelfedora.fedoraseconomy.listeners;
 
+import io.github.michaelfedora.fedoraseconomy.config.FeConfig;
 import io.github.michaelfedora.fedoraseconomy.economy.account.FeUniqueAccount;
 import io.github.michaelfedora.fedoraseconomy.economy.event.FeEconomyTransferEvent;
+import io.github.michaelfedora.fedoraseconomy.economy.transaction.FeTransactionResult;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
@@ -27,7 +29,12 @@ public final class EconomyTransactionListener {
                 && result.getType() != TransactionTypes.WITHDRAW)
             return;
 
-        Account account = result.getAccount();
+        FeTransactionResult feResult = new FeTransactionResult(result);
+
+        if(! (FeConfig.instance.getVerboseLogging() || feResult.isInternal()) )
+            return;
+
+        Account account = feResult.getAccount();
         Optional<FeUniqueAccount> opt_uniqueAccount = FeUniqueAccount.fromAccount(account);
 
         if(opt_uniqueAccount.isPresent()) {
@@ -43,10 +50,10 @@ public final class EconomyTransactionListener {
                 Text.Builder tb = Text.builder();
 
                 String action;
-                if(result.getType() == TransactionTypes.DEPOSIT) action = "Deposited ";
+                if(feResult.getType() == TransactionTypes.DEPOSIT) action = "Deposited ";
                 else action = "Withdrew ";
 
-                tb.append(Text.of(action, result.getCurrency().format(result.getAmount()), "!"));
+                tb.append(Text.of(action, feResult.getCurrency().format(feResult.getAmount()), "!"));
 
                 player.sendMessage(tb.build());
             }
