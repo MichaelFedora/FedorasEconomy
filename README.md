@@ -132,6 +132,6 @@ I couldn't have made this without you. :heart:
 
 Enjoy!
 
-![stats or something](http://i.mcstats.org/FedorasEconomy/Global+Statistics.png)
+![stats or something](http://i.mcstats.org/FedorasEconomy/Global+Statistics.borderless.png)
 
 <right><sup>*Soli deo gloria*</sup></right>
