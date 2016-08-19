@@ -96,6 +96,9 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 
 ### Most recent changelog(s)
 
+#### v1.1.1
+- Fixed help command highlight-clicking giving `/fm` instead of `/fe`.
+
 #### v1.1.0
 - Added `verboseLogging` option to toggle whether or not it should display messages from all transactions vs internal commands only
 - Added `fe [reset, zero] <account>` and `fe user [reset, zero] <user>` to reset or "zero" an account's balances
@@ -115,7 +118,7 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 
 - Latest: [![Latest](https://img.shields.io/github/downloads/MichaelFedora/FedorasEconomy/latest/total.svg)](https://github.com/MichaelFedora/FedorasEconomy/releases/latest)
 
-[![Iissues](https://img.shields.io/github/issues/MichaelFedora/FedorasEconomy.svg)](https://github.com/MichaelFedora/FedorasEconomy/issues)
+[![Issues](https://img.shields.io/github/issues/MichaelFedora/FedorasEconomy.svg)](https://github.com/MichaelFedora/FedorasEconomy/issues)
 
 ---
 

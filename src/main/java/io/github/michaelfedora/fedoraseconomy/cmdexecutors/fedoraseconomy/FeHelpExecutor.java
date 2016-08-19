@@ -70,7 +70,7 @@ public class FeHelpExecutor extends FeExecutorBase {
         }
 
         List<Text> helpList = Lists.newArrayList();
-        String prefix = "/fm " + ((!parentCmd.equals("")) ? parentCmd + " " : "");
+        String prefix = "/fe " + ((!parentCmd.equals("")) ? parentCmd + " " : "");
         for(List<String> aliases : commands.keySet()) {
             CommandSpec commandSpec = commands.get(aliases);
             Text usage = commandSpec.getUsage(src);
