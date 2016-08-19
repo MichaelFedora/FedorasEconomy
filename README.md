@@ -120,6 +120,8 @@ For the "category" commands or the root command (`/fe`), instead of the `[first_
 
 [![Issues](https://img.shields.io/github/issues/MichaelFedora/FedorasEconomy.svg)](https://github.com/MichaelFedora/FedorasEconomy/issues)
 
+[![Wiki](https://img.shields.io/badge/wiki-really%20cool-brightgreen.svg)](https://github.com/MichaelFedora/FedorasEconomy/wiki)
+
 ---
 
 ## Big thanks to a couple of people
