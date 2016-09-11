@@ -59,6 +59,9 @@ public class BalanceExecutor extends FeExecutorBase {
                 opt_user = Optional.of((User) src);
                 me = true;
             }
+        } else {
+            if(!src.hasPermission(PluginInfo.DATA_ROOT + ".global." +  NAME + ".other"))
+                throw new CommandException(Text.of("You don't have permission to view other people's balances!"));
         }
 
         if(!opt_user.isPresent())
