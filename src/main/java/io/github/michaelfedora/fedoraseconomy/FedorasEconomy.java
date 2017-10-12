@@ -228,6 +228,7 @@ public class FedorasEconomy {
         subCommands.put(FePayExecutor.ALIASES, FePayExecutor.create());
         subCommands.put(FeTransferExecutor.ALIASES, FeTransferExecutor.create());
         subCommands.put(FeResetExecutor.ALIASES, FeResetExecutor.create());
+        subCommands.put(FeTossExecutor.ALIASES, FeTossExecutor.create());
 
         commandManager.register(this, FeExecutor.create(subCommands), FeExecutor.ALIASES);
     }

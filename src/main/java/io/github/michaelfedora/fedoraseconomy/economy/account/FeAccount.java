@@ -383,7 +383,8 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransactionResult deposit(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
-        return this.deposit(currency, amount, cause, contexts, false);
+        if(amount.compareTo(BigDecimal.ZERO) > 0) return this.deposit(currency, amount, cause, contexts, false);
+        else return this.withdraw(currency, amount, cause, contexts, false);
     }
 
     public TransactionResult deposit(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts, boolean internal) {
@@ -446,7 +447,8 @@ public abstract class FeAccount implements Account {
      */
     @Override
     public TransactionResult withdraw(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts) {
-        return this.withdraw(currency, amount, cause, contexts, false);
+        if(amount.compareTo(BigDecimal.ZERO) < 0) return this.deposit(currency, amount, cause, contexts, false);
+        else return this.withdraw(currency, amount, cause, contexts, false);
     }
 
     public TransactionResult withdraw(Currency currency, BigDecimal amount, Cause cause, Set<Context> contexts, boolean internal) {
@@ -465,17 +467,17 @@ public abstract class FeAccount implements Account {
 
             // take a loan if they don't have enough funds?
 
-            BigDecimal diff;
+            BigDecimal newBal;
 
             if(!resultSet.next()) {
 
-                 diff = this.getDefaultBalance(currency).subtract(amount);
+                 newBal = this.getDefaultBalance(currency).subtract(amount);
 
-                if(diff.compareTo(BigDecimal.ZERO) >= 0) {
+                if(newBal.compareTo(BigDecimal.ZERO) >= 0) {
 
                     statement = conn.prepareStatement("INSERT INTO `" + this.identifier + "`(currency, balance) values (?, ?)");
                     statement.setString(1, currency.getId());
-                    statement.setBigDecimal(2, diff);
+                    statement.setBigDecimal(2, newBal);
 
                     update = statement.executeUpdate();
 
@@ -486,13 +488,19 @@ public abstract class FeAccount implements Account {
 
             } else {
 
-                diff = resultSet.getBigDecimal("balance").subtract(amount);
+                newBal = resultSet.getBigDecimal("balance").subtract(amount);
 
-                statement = conn.prepareStatement("UPDATE `" + this.identifier + "` SET balance=? WHERE currency=?");
-                statement.setBigDecimal(1, diff);
-                statement.setString(2, currency.getId());
+                if(newBal.compareTo(BigDecimal.ZERO) >= 0) {
+                    statement = conn.prepareStatement("UPDATE `" + this.identifier + "` SET balance=? WHERE currency=?");
+                    statement.setBigDecimal(1, newBal);
+                    statement.setString(2, currency.getId());
 
-                update = statement.executeUpdate();
+                    update = statement.executeUpdate();
+
+                } else {
+
+                    return new FeTransactionResult(this, currency, amount, contexts, ResultType.ACCOUNT_NO_FUNDS, TransactionTypes.WITHDRAW, internal);
+                }
 
             }
 
