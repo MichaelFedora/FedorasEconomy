@@ -1,6 +1,6 @@
 # Fedora's Economy
 
-#### Built for `Sponge 4.2.0-SNAPSHOT` *(`1.8.9`)* and `Sponge v5.0.0-SNAPSHOT` *(`1.10.2`)*, and off of `JDK 1.8.0_101`.
+#### Built for `Sponge 5.1.0-SNAPSHOT` *(`1.10.2`)* and `Sponge v6.1.0-SNAPSHOT` *(`1.11.2`)*, and off of `JDK 1.8.0_144`.
 
 Just another (light-weight) Economy implementation `^_^` .
 
@@ -22,6 +22,16 @@ Just another (light-weight) Economy implementation `^_^` .
 ---
 
 ### Most recent changelog(s)
+
+### v1.1.3
+- Updated Gradle to 4.2.1
+- Added `/fe toss` to test withdraws
+- Made it so you can't pay someone a negative amount
+- Made it so you you shouldn't be able to withdraw or deposit a negative amount
+  - it'll automatically redirect to the other function
+- Updated plugin id so it compiles again
+- Compile for 1.11.2 / SpongeAPI v5, on JDK 1.8.0_144
+- Dropped 1.8.9 support
 
 #### v1.1.2
 - Added permission `fedoraseconomy.global.balance.other` (checking other's balance)
