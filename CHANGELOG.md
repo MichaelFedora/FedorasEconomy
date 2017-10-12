@@ -1,3 +1,13 @@
+#### v1.1.3 (Critical)
+- Updated Gradle to 4.2.1
+- Added `/fe toss` to test withdraws
+- Made it so you can't pay someone a negative amount
+- Made it so you you shouldn't be able to withdraw or deposit a negative amount
+  - it'll automatically redirect to the other function
+- Updated plugin id so it compiles again
+- Compile for 1.11.2 / SpongeAPI v5, on JDK 1.8.0_144
+- Dropped 1.8.9 support
+
 #### v1.1.2
 - Added permission `fedoraseconomy.global.balance.other` (checking other's balance)
 - Moved commands from Readme to Wiki
